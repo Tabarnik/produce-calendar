@@ -578,7 +578,7 @@ function regularOf(key, deal) {
   if (deal.reg) return { text: `$${deal.reg.toFixed(2)}`, src: "store's regular price", save: p ? 1 - p / deal.reg : null };
   if (!key || !PRICE[key]) return null;
   const [u, avg] = PRICE[key];
-  const out = { text: `$${avg.toFixed(2)} <span class="u">/${u} avg</span>`, src: "Quebec average shelf price (StatCan)", save: null };
+  const out = { text: u === "kg" ? `$${(avg / 2.2046).toFixed(2)} <span class="u">/lb avg</span>` : `$${avg.toFixed(2)} <span class="u">/${u} avg</span>`, src: "Quebec average shelf price (StatCan)", save: null };
   const bag = /^([\d.]+) ?lb (bag|box)$/.exec(u);
   const regLb = u === "kg" ? avg / 2.2046 : bag ? avg / parseFloat(bag[1]) : null;
   if (deal.lb && regLb) out.save = 1 - deal.lb / regLb;
