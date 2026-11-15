@@ -1,0 +1,767 @@
+<title>Quebec Produce Calendar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one market-stall grid. Rows are crops grouped by kind, sorted so what's good this month sits on top; usual prices and this week's flyer deal sit at the right. */
+:root {
+  --bg: #f7f9f4;
+  --paper: #ffffff;
+  --ink: #1b2a1f;
+  --muted: #5d6b60;
+  --rule: #dbe3d8;
+  --peak: #2c7a4b;
+  --fresh: #a8d5b2;
+  --store: #b99a5f;
+  --store-bg: #f1e8d6;
+  --green: #6f8aa3;
+  --can: #7a4fa3;
+  --can2: #ddcdec;
+  --imp: #d98a1c;
+  --imp2: #f6dcae;
+  --cheap: #1f6b3f;
+  --dear: #b5523b;
+  --deal-bg: #e1f4e5;
+  --money: #17803a;
+  --none: #eef1ec;
+  --now: #f4d35e;
+  --now-ink: #4a3b00;
+  --display: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121a15; --paper: #18221c; --ink: #e4ece5; --muted: #9db0a2; --rule: #2c3a31;
+    --peak: #4fb37a; --fresh: #2f5d3f; --store: #c9a96c; --store-bg: #2e281c; --green: #8ea7bf;
+    --can: #b48ae0; --can2: #3a2a4d; --imp: #e9a23b; --imp2: #4a3516; --cheap: #7fd6a2; --dear: #f08f74;
+    --deal-bg: #173523; --money: #5fd17a; --none: #222d26; --now: #d9b93c; --now-ink: #1b1600; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121a15; --paper: #18221c; --ink: #e4ece5; --muted: #9db0a2; --rule: #2c3a31;
+  --peak: #4fb37a; --fresh: #2f5d3f; --store: #c9a96c; --store-bg: #2e281c; --green: #8ea7bf;
+  --can: #b48ae0; --can2: #3a2a4d; --imp: #e9a23b; --imp2: #4a3516; --cheap: #7fd6a2; --dear: #f08f74;
+  --deal-bg: #173523; --money: #5fd17a; --none: #222d26; --now: #d9b93c; --now-ink: #1b1600; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 14px; line-height: 1.45; }
+.wrap { max-width: 1400px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+header { display: grid; gap: 14px; }
+.top { display: flex; flex-wrap: wrap; gap: 12px 32px; align-items: end; justify-content: space-between; }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(30px, 5vw, 46px); line-height: 1; margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
+h1 small { display: block; font-weight: 500; font-size: 0.42em; letter-spacing: 0; color: var(--muted); margin-top: 8px; max-width: 70ch; }
+h2 { font-family: var(--display); font-weight: 800; font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend b { font-weight: 700; }
+.sw { width: 18px; height: 12px; border-radius: 2px; display: inline-block; }
+.c-P { background: var(--peak); }
+.c-f { background: var(--fresh); }
+.c-s { background: repeating-linear-gradient(135deg, var(--store) 0 2px, var(--store-bg) 2px 5px); }
+.c-g { background: transparent; box-shadow: inset 0 0 0 1.5px var(--green); }
+.c-CB { background: var(--can); }
+.c-c { background: var(--can2); }
+.c-IB { background: var(--imp); }
+.c-i { background: var(--imp2); }
+.picker { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; font-size: 13px; }
+.picker span { color: var(--muted); margin-right: 6px; }
+.picker button { font: inherit; font-size: 12px; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); cursor: pointer; }
+.picker button[aria-pressed="true"] { background: var(--now); color: var(--now-ink); border-color: var(--now); font-weight: 700; }
+.picker button:focus-visible { outline: 2px solid var(--peak); outline-offset: 1px; }
+.sheet { background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 18px; }
+.scroll { overflow-x: auto; }
+table { border-collapse: separate; border-spacing: 2px 2px; width: 100%; min-width: 1250px; font-variant-numeric: tabular-nums; }
+th, td { padding: 0; }
+thead th { font-family: var(--display); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding-bottom: 4px; }
+thead th.now { color: var(--now-ink); background: var(--now); border-radius: 3px 3px 0 0; font-weight: 800; }
+thead th.num, thead th.deal { text-align: right; padding: 0 0 4px 8px; }
+thead th.deal { text-align: left; }
+.grp td { font-family: var(--display); font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--peak); padding: 12px 0 2px; border-bottom: 1px solid var(--rule); }
+.name { white-space: nowrap; padding-right: 10px; font-size: 13.5px; text-align: left; font-weight: 400; }
+.name i { color: var(--muted); font-size: 12px; margin-left: 4px; }
+.name.o-c { color: var(--can); } .name.o-x { color: var(--imp); }
+.name.o-c i, .name.o-x i { color: inherit; opacity: 0.85; }
+td.m { width: 4.4%; height: 24px; border-radius: 2px; text-align: center; font-size: 11px; line-height: 17px; font-weight: 700; }
+td.m.now { outline: 2px solid var(--now); outline-offset: 1px; border-radius: 2px; }
+td.m { padding: 0; vertical-align: middle; }
+td.m .sb { height: 22px; border-radius: 2px; display: flex; align-items: center; justify-content: center; }
+.star { color: #c98a00; font-size: 15px; line-height: 1; text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff; }
+:where(.sb) { background: transparent; }
+.p1 { background: #1d5fae !important; } .p2 { background: #8db8e6 !important; } .p3 { background: #d4d4cc !important; } .p4 { background: #f2a25c !important; } .p5 { background: #c8352a !important; }
+.key { display: grid; gap: 6px; font-size: 13px; }
+.key .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.key .row > b { min-width: 150px; font-weight: 700; }
+.key span { display: inline-flex; align-items: center; gap: 6px; }
+.demo { display: inline-grid; gap: 2px; width: 22px; vertical-align: middle; }
+.demo i { display: block; border-radius: 2px; } .demo i:first-child { height: 12px; } .demo i:last-child { height: 6px; }
+td.num { text-align: right; white-space: nowrap; padding-left: 8px; font-size: 12.5px; }
+td.num .lo { color: var(--cheap); font-weight: 700; } td.num .hi { color: var(--dear); }
+td.num .u, td.deal .u { color: var(--muted); font-size: 11px; }
+td.deal { white-space: nowrap; padding: 1px 5px; line-height: 1.15; font-size: 11px; border-radius: 2px; }
+td.deal.has { background: var(--deal-bg); }
+td.deal.best { box-shadow: inset 0 0 0 2px var(--cheap); font-weight: 700; }
+td.deal b { font-weight: 700; }
+td.deal .nx { color: var(--muted); }
+.board { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.month { background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; display: grid; gap: 6px; align-content: start; }
+.month.now { border-color: var(--now); box-shadow: 0 0 0 2px var(--now); }
+.month h3 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 17px; display: flex; justify-content: space-between; align-items: baseline; }
+.month h3 em { font-style: normal; font-family: var(--body); font-weight: 400; font-size: 12px; color: var(--muted); }
+.month p { margin: 0; font-size: 13px; }
+.month .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 700; }
+.month .x { color: var(--imp); } .month .ca { color: var(--can); }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+.notes > div { min-width: 0; }
+.notes ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 6px; max-width: 68ch; }
+.foot { font-size: 12px; color: var(--muted); margin: 0; }
+.foot a { color: inherit; }
+@media print {
+  @page { size: letter landscape; margin: 0.3in; }
+  :root { --bg:#fff; --paper:#fff; --ink:#111; --muted:#555; --rule:#ccc; --peak:#2c7a4b; --fresh:#a8d5b2; --store:#a9874a; --store-bg:#f3ead8; --green:#6f8aa3; --can:#7a4fa3; --can2:#ddcdec; --imp:#d98a1c; --imp2:#f6dcae; --cheap:#1f6b3f; --dear:#b5523b; --deal-bg:#e1f4e5; --money:#17803a; color-scheme: light; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-size: 9px; }
+  .wrap { padding: 0; gap: 6px; max-width: none; }
+  h1 { font-size: 20px; } h1 small { margin-top: 3px; }
+  .picker { display: none; }
+  .legend { font-size: 7.5px; gap: 3px 10px; }
+  .sheet { border: 0; padding: 0; }
+  table { min-width: 0; border-spacing: 1.5px 1px; }
+  tbody th, tbody td { line-height: 1; }
+  #grid tr { break-inside: avoid; }
+  .name { font-size: 7.4px; padding-right: 4px; } .name i { font-size: 6.4px; }
+  td.m { height: auto; line-height: 0; font-size: 0; } .nowp h3 em { font-size: 7px; }
+  td.m .sb { height: 9px; } .star { font-size: 8px; }
+  .key { font-size: 7.5px; gap: 2px; } .key .row > b { min-width: 80px; }
+  .nowp { grid-template-columns: repeat(3, 1fr); gap: 5px; } .nowp > div { padding: 4px 7px; border-top-width: 3px; } .nowp h3 { font-size: 9.5px; margin-bottom: 2px; } .nowp p { font-size: 7.5px; line-height: 1.3; }
+  td.num, td.deal { font-size: 6.8px; } td.num .u, td.deal .u { font-size: 5.8px; }
+  .grp td { font-size: 7.5px; padding: 3px 0 0; line-height: 1.1; }
+  thead th { font-size: 7px; }
+  .page2 { break-before: page; }
+  .board { grid-template-columns: repeat(4, 1fr); gap: 5px; }
+  .month { padding: 5px 7px; gap: 2px; }
+  .month h3 { font-size: 10.5px; } .month p { font-size: 7.5px; line-height: 1.25; } .month .lbl { font-size: 6.5px; }
+  .notes { grid-template-columns: 1fr 1fr; gap: 10px; font-size: 7.4px; line-height: 1.25; }
+  .notes ul { gap: 1px; }
+  h2 { font-size: 13px; }
+  .foot { font-size: 7px; }
+}
+
+.dt { min-width: 980px; border-spacing: 0; font-size: 13.5px; }
+.dt thead th { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+.dt td, .dt tbody th { padding: 6px 10px; border-bottom: 1px solid var(--rule); text-align: left; white-space: nowrap; font-weight: 400; }
+.dt tbody th { font-weight: 700; }
+.dt tbody th.o-c { color: var(--can); } .dt tbody th.o-x { color: var(--imp); }
+.dt tr.dg td { font-family: var(--display); font-weight: 800; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--peak); padding: 14px 10px 4px; }
+.dt td.mx b { background: var(--deal-bg); color: var(--money); border-radius: 6px; padding: 1px 6px; }
+.dt .save { color: var(--cheap); }
+.dt .off { color: var(--muted); }
+.dt .ssn .sw { width: 12px; height: 10px; margin-right: 6px; vertical-align: -1px; }
+.dt .u { color: var(--muted); font-size: 11.5px; }
+.dt .oth { color: var(--muted); }
+@media print {
+  .dt .ssn .sw { width: 7px; height: 5px; margin-right: 3px; } .dt .u { font-size: 6px; }
+  .dt { min-width: 0; font-size: 7.5px; } .dt td, .dt tbody th, .dt thead th { padding: 1px 4px; } .dt tr.dg td { font-size: 7.5px; padding: 4px 4px 1px; }
+}
+.blurb { margin: 0; padding: 16px 20px; font-size: 16px; line-height: 1.55; max-width: 100%; }
+.blurb b { font-weight: 700; }
+.blurb .money { color: var(--money); font-weight: 700; }
+.blurb small { display: block; margin-top: 6px; font-size: 12px; color: var(--muted); }
+@media print { .blurb { font-size: 9px; padding: 0; border: 0; } .blurb small { font-size: 7px; margin-top: 2px; } }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.toggle { display: inline-flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 999px; font-size: 13px; cursor: pointer; user-select: none; }
+.toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.toggle .track { width: 36px; height: 20px; border-radius: 999px; background: var(--rule); position: relative; transition: background .2s; flex: none; }
+.toggle .knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: left .2s; }
+.toggle input:checked + .track { background: var(--peak); }
+.toggle input:checked + .track .knob { left: 18px; }
+.toggle input:focus-visible + .track { outline: 2px solid var(--peak); outline-offset: 2px; }
+@media print { .toggle { display: none; } }
+
+/* Vibe: dark dashboard, solid cards, bright pill accents */
+:root, :root:not([data-theme="light"]), :root[data-theme="dark"] {
+  --bg: #0c0d10; --paper: #16171b; --card2: #1d1f24; --ink: #f2f2ee; --muted: #8b8e96; --rule: #26282e;
+  --lime: #c3f264; --sun: #f6e46a; --lilac: #b9a6ff;
+  --peak: #c3f264; --fresh: #5d8a3a; --store: #a88f5c; --store-bg: #2a2418; --green: #7fa3c4;
+  --can: #b9a6ff; --can2: #3b3366; --imp: #ffad5c; --imp2: #5b3e1e; --cheap: #c3f264; --dear: #ff8a70;
+  --deal-bg: rgba(195,242,100,0.12); --money: #c3f264; --none: transparent; --now: #f6e46a; --now-ink: #17170c;
+  --display: "Inter Tight", system-ui, sans-serif; --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 14px; -webkit-font-smoothing: antialiased; }
+.wrap { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-top: 32px; }
+.card, .sheet, .month { background: var(--paper); border: 1px solid var(--rule); border-radius: 24px; box-shadow: none; }
+.sheet { padding: 18px 20px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(34px, 6vw, 56px); letter-spacing: -0.035em; line-height: 0.95; }
+h1 .eyebrow { display: block; font-family: var(--body); font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--lime); margin-bottom: 10px; }
+h1 small { font-family: var(--body); font-size: 14px; font-weight: 400; color: var(--muted); margin-top: 12px; letter-spacing: 0; }
+h2 { font-family: var(--display); font-weight: 700; font-size: 24px; letter-spacing: -0.02em; }
+.top { align-items: end; }
+.top > * { min-width: 0; }
+.controls { gap: 8px; }
+.picker { background: var(--paper); border: 1px solid var(--rule); border-radius: 999px; padding: 4px; gap: 2px; max-width: 100%; box-sizing: border-box; }
+.picker button { border: 0; background: transparent; color: var(--muted); border-radius: 999px; padding: 7px 11px; font-size: 12.5px; font-weight: 600; }
+.picker button:hover { color: var(--ink); }
+.picker button[aria-pressed="true"] { background: var(--sun); color: var(--now-ink); box-shadow: none; }
+.toggle { background: var(--paper); border: 1px solid var(--rule); display: inline-flex; align-items: center; gap: 10px; padding: 7px 14px 7px 8px; border-radius: 999px; font-size: 13px; font-weight: 600; cursor: pointer; user-select: none; }
+.toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.toggle .track { width: 38px; height: 22px; border-radius: 999px; background: #33363d; position: relative; transition: background .2s; flex: none; }
+.toggle .knob { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .2s; }
+.toggle input:checked + .track { background: var(--lime); }
+.toggle input:checked + .track .knob { left: 19px; background: #111; }
+.toggle input:focus-visible + .track { outline: 2px solid var(--lime); outline-offset: 2px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.kpi { background: var(--paper); border: 1px solid var(--rule); border-radius: 24px; padding: 18px 20px; display: grid; gap: 6px; min-width: 0; }
+.kpi b { font-family: var(--display); font-weight: 700; font-size: clamp(26px, 3.4vw, 44px); overflow-wrap: anywhere; letter-spacing: -0.04em; line-height: 1; }
+.kpi span { font-size: 13px; color: var(--muted); }
+.kpi.lime { background: var(--lime); border-color: var(--lime); color: #12160a; }
+.kpi.sun { background: var(--sun); border-color: var(--sun); color: #17170c; }
+.kpi.lime span, .kpi.sun span { color: rgba(0,0,0,0.62); }
+.blurb { margin: 0; padding: 20px 22px; font-size: 16px; line-height: 1.6; }
+.blurb b { font-weight: 600; color: var(--ink); }
+.blurb .money { color: #12160a; background: var(--lime); border-radius: 999px; padding: 1px 8px; font-weight: 700; font-size: 14px; white-space: nowrap; }
+.blurb small { display: block; margin-top: 8px; font-size: 12px; color: var(--muted); }
+.nowp .card { padding: 20px 22px; }
+.nowp h3 { margin: 0 0 12px; font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -0.02em; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.nowp h3 em { font-style: normal; font-family: var(--body); font-weight: 500; font-size: 12px; color: var(--muted); background: var(--card2); border-radius: 999px; padding: 3px 10px; }
+.nowp h3 .wl { font-family: var(--body); font-size: 12px; font-weight: 700; color: #12160a; background: var(--lime); border-radius: 999px; padding: 3px 10px; letter-spacing: 0; }
+@media print { .nowp h3 .wl { font-size: 7px; padding: 0 4px; } }
+.dt { border-spacing: 0; font-size: 13.5px; }
+.dt thead th { font-family: var(--body); font-size: 11.5px; font-weight: 500; letter-spacing: 0.02em; text-transform: none; color: var(--muted); border-bottom: 1px solid var(--rule); padding: 8px 12px; }
+.dt td, .dt tbody th { padding: 9px 12px; border-bottom: 1px solid var(--rule); }
+.dt tbody tr:not(.dg):hover td, .dt tbody tr:not(.dg):hover th { background: var(--card2); }
+.dt tbody th { font-weight: 600; }
+.dt tr.dg td { font-family: var(--body); font-weight: 600; font-size: 11px; letter-spacing: 0.12em; color: var(--muted); padding: 18px 12px 6px; border-bottom: 0; }
+.dt td.mx b { background: var(--lime); color: #12160a; border-radius: 999px; padding: 3px 10px; font-weight: 700; }
+.dt .save { color: var(--ink); background: #2c3a14; border-radius: 999px; padding: 3px 9px; font-weight: 600; }
+.dt .ssn .sw { width: 8px; height: 8px; border-radius: 50%; }
+thead th { font-family: var(--body); font-weight: 500; letter-spacing: 0.04em; }
+thead th.now { background: var(--sun); color: var(--now-ink); border-radius: 999px; }
+.grp td { font-family: var(--body); font-weight: 600; font-size: 11px; letter-spacing: 0.12em; color: var(--muted); border-bottom: 0; padding: 18px 0 4px; }
+.name { font-weight: 500; }
+.name i { color: var(--muted); }
+td.m .sb { border-radius: 7px; height: 22px; }
+td.m.now { outline: 0; background: rgba(246,228,106,0.10); border-radius: 8px; }
+.star { color: #17170c; text-shadow: none; font-size: 13px; }
+.c-f .star, .c-c .star, .c-i .star, .c-s .star { color: var(--sun); }
+.dt .star { color: var(--sun); }
+/* Local = all of Canada: rest-of-Canada rows use the same greens as Quebec */
+.c-CB { background: var(--peak); } .c-c { background: var(--fresh); }
+.name.o-c, .dt tbody th.o-c, .nowp .o-c, .month .ca { color: inherit; }
+.legend2 { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--rule); font-size: 12px; color: var(--muted); }
+.legend2 span { display: inline-flex; align-items: center; gap: 6px; }
+.legend2 .sw { width: 16px; height: 12px; border-radius: 4px; }
+.legend2 .star { color: var(--sun); font-size: 13px; }
+.legend2 .lnote { opacity: 0.8; }
+@media print { .legend2 { font-size: 7px; gap: 3px 10px; margin-top: 4px; padding-top: 3px; } .legend2 .sw { width: 9px; height: 6px; border-radius: 2px; } .legend2 .star { color: #c98a00; font-size: 8px; } }
+td.deal { border-radius: 999px; padding: 2px 9px; }
+td.deal.has { background: var(--deal-bg); color: var(--money); font-weight: 600; }
+td.deal.has .nx { font-weight: 400; }
+td.deal.best { box-shadow: inset 0 0 0 1.5px var(--lime); }
+.month { border-radius: 22px; padding: 16px 18px; }
+.month.now { border-color: var(--sun); box-shadow: inset 0 0 0 1px var(--sun); }
+.month h3 { font-family: var(--display); font-weight: 700; letter-spacing: -0.02em; }
+.month .lbl { color: var(--muted); font-weight: 600; letter-spacing: 0.1em; }
+.month .x { color: var(--imp); } .month .ca { color: var(--can); }
+.src { color: var(--muted); font-size: 12px; }
+.src summary { cursor: pointer; width: fit-content; padding: 6px 12px; border-radius: 999px; background: var(--paper); border: 1px solid var(--rule); font-weight: 600; }
+.src .foot { margin-top: 10px; line-height: 1.6; max-width: 110ch; }
+.src a { color: var(--ink); }
+@media print {
+  :root:root:not([data-theme="zz"]) { --bg:#fff; --paper:#fff; --card2:#fff; --ink:#111; --muted:#555; --rule:#ccc; --peak:#2c7a4b; --fresh:#a8d5b2; --store:#a9874a; --store-bg:#f3ead8; --can:#7a4fa3; --can2:#ddcdec; --imp:#d98a1c; --imp2:#f6dcae; --cheap:#1f6b3f; --deal-bg:#e1f4e5; --money:#17803a; --lime:#e1f4e5; --sun:#f4d35e; color-scheme: light; }
+  body { background: #fff; }
+  .card, .sheet, .month, .kpi { border-radius: 6px; border: 1px solid #ddd; }
+  .sheet { border: 0; padding: 0; }
+  .kpis, .src, .toggle, .picker { display: none; }
+  h1 { font-size: 20px; } h1 .eyebrow { display: none; } h1 small { font-size: 8px; margin-top: 3px; }
+  .blurb { font-size: 9px; padding: 4px 7px; } .blurb .money { font-size: 8px; padding: 0 4px; }
+  .nowp .card { padding: 4px 7px; } .nowp h3 { font-size: 10px; margin-bottom: 3px; } .nowp h3 em { font-size: 7px; padding: 0 4px; }
+  .dt td.mx b, .dt .save { padding: 0 4px; }
+  .dt { min-width: 0; font-size: 7.5px; } .dt thead th { font-size: 7px; padding: 1px 4px; } .dt .save { background: none; color: var(--cheap); } .dt .star { color: #c98a00; }
+  .dt td, .dt tbody th { padding: 1px 4px; } .dt tr.dg td { padding: 4px 4px 1px; font-size: 7px; }
+  .grp td { font-size: 7.5px; padding: 3px 0 0; }
+  td.m .sb { height: 9px; border-radius: 2px; } .star { font-size: 8px; }
+  td.deal { padding: 0 4px; }
+  h2 { font-size: 13px; }
+  .month { padding: 5px 7px; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="top">
+      <h1><span class="eyebrow">Montreal produce</span>What's good right now<small id="sub">Quebec first, then the rest of Canada and imports at their best</small></h1>
+      <div class="controls"><div class="picker" role="group" aria-label="Sort for month" id="picker"></div>
+      <label class="toggle"><input type="checkbox" id="bestonly"><span class="track"><span class="knob"></span></span>Best only</label></div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <p class="blurb card" id="blurb"></p>
+  </header>
+
+  <section class="nowp" id="nowp" aria-label="What to buy this month"></section>
+
+  <section class="sheet">
+    <div class="scroll"><table id="grid" aria-label="Seasonal availability, prices and flyer deals"></table></div>
+    <div class="legend2" aria-label="Legend"><span><b class="star">★</b>Best price</span><span><i class="sw c-P"></i>Local peak</span><span><i class="sw c-f"></i>Local, good</span><span><i class="sw c-IB"></i>Imported peak</span><span><i class="sw c-i"></i>Imported, good</span><span><i class="sw c-s"></i>Storage</span><span><i class="sw c-g"></i>Greenhouse</span><span class="lnote">Local = Quebec and the rest of Canada</span></div>
+  </section>
+
+  <section class="page2" style="display:grid; gap:14px">
+    <h2>The year at a glance</h2>
+    <div class="board" id="board"></div>
+  </section>
+
+
+</div>
+
+<script>
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const MONTHS_LONG = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const MONTHS_FR = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+
+// StatCan Quebec: [unit, three-year average $, monthly index vs average (100 = usual)]
+const PRICE = {
+  strawberries: ["1 lb box", 4.19, [90,83,64,68,75,88,102,124,111,109,153,131]],
+  peppers: ["kg", 7.76, [117,116,110,90,99,99,109,71,58,83,126,120]],
+  carrots: ["3 lb bag", 3.38, [92,95,97,114,122,128,119,98,97,82,85,70]],
+  romaine: ["head", 2.99, [114,119,124,119,121,87,67,66,71,77,116,120]],
+  celery: ["each", 2.94, [114,120,102,108,119,115,83,65,63,81,114,117]],
+  potatoes: ["10 lb bag", 4.31, [104,91,97,107,116,112,123,106,83,67,98,96]],
+  cantaloupe: ["each", 3.46, [115,98,82,97,96,105,96,72,84,107,128,118]],
+  squash: ["kg", 4.52, [102,116,112,110,121,117,119,93,69,67,82,92]],
+  cucumber: ["each", 1.58, [118,128,106,85,85,77,77,79,105,113,114,110]],
+  tomatoes: ["kg", 5.58, [129,122,113,95,95,78,86,93,90,90,100,107]],
+  grapes: ["kg", 6.69, [105,98,91,100,121,113,96,88,77,82,104,123]],
+  onions: ["3 lb bag", 3.91, [91,99,95,107,107,119,119,105,106,89,87,78]],
+  cabbage: ["kg", 2.50, [101,103,108,106,119,116,114,88,90,83,80,91]],
+  avocado: ["each", 1.90, [94,91,106,107,120,113,101,91,86,103,93,94]],
+  broccoli: ["each", 2.31, [97,98,97,105,118,107,96,100,87,82,113,101]],
+  oranges: ["kg", 4.63, [100,116,109,101,107,87,88,88,107,93,96,108]],
+  pears: ["kg", 5.30, [96,109,85,87,99,103,105,107,106,111,88,104]],
+  sweetpotatoes: ["kg", 3.95, [100,101,92,93,102,103,112,115,105,91,97,91]],
+  apples: ["kg", 5.38, [98,97,99,98,110,111,105,106,88,90,92,107]],
+  mushrooms: ["227 g", 2.03, [103,104,95,97,102,95,94,110,109,93,94,104]],
+  lemons: ["each", 0.95, [100,104,98,97,92,105,102,99,105,94,98,107]],
+  limes: ["each", 0.83, [97,100,101,100,98,108,99,95,102,101,95,105]],
+  bananas: ["kg", 1.82, [98,100,101,100,101,101,101,102,102,98,98,98]]
+};
+
+// StatCan Quebec, January 2025 to September 2026: [average, lowest, lowest month, highest, highest month]
+
+// StatCan farm gate price per lb (value / marketed tonnes), tables 32-10-0365 and 32-10-0364. geo = where measured.
+
+// Wholesale prices: AAFC Infohort weekly wholesale, Vancouver, Calgary, Edmonton, Winnipeg, Regina, St. John's.
+// Used for items Statistics Canada does not price at retail. [unit, avg 2025-26, low, low month, high, high month, month index]
+const WS = {"strawberries": ["lb", 6.35, 5.11, "Jul 25", 7.94, "Jan 25", [null, null, null, null, 110, 92, 98, 94, 95, 99, 111, null]], "strawberries-ca": ["lb", 4.68, 3.42, "Jun 25", 7.84, "Nov 25", [121, 110, 85, 89, 77, 72, 80, 91, 104, 94, 141, 140]], "raspberries": ["pack", 3.88, 2.62, "Oct 26", 5.37, "Feb 25", [109, 115, 105, 94, 104, 102, 116, 101, 102, 78, 90, 89]], "blueberries": ["pack", 4.22, 2.59, "Aug 25", 6.43, "Sep 26", [100, 111, 108, 112, 103, 96, 84, 63, 104, 117, 102, 95]], "blackberries": ["pack", 3.58, 2.91, "Jan 26", 4.64, "Sep 26", [98, 93, 91, 93, 88, 88, 109, 101, 108, 114, 110, 102]], "cranberries": ["pack", 2.78, 2.71, "Oct 25", 2.93, "Oct 26", [null, null, null, null, null, null, null, null, null, 101, null, 99]], "groundcherries": ["pack", 2.45, 2.09, "Sep 26", 2.47, "Apr 25", [99, 100, 100, 102, 102, 102, 102, 102, 97, 98, 97, 97]], "apples": ["lb", 1.62, 1.2, "Oct 25", 1.97, "Jul 26", [99, 97, 98, 100, 104, 111, 112, 107, 97, 90, 91, 96]], "pears": ["lb", 1.73, 1.32, "Oct 25", 2.35, "Feb 25", [102, 113, 102, 99, 101, 103, 111, 106, 92, 89, 92, 95]], "plums": ["lb", 2.81, 1.69, "Aug 25", 3.69, "May 25", [108, 128, 119, 125, 114, 86, 74, 80, 92, 99, 90, 89]], "cherries": ["lb", 6.02, 3.3, "Jul 25", 11.09, "May 25", [103, 95, null, null, 125, 85, 67, 74, 95, null, null, 132]], "apricots": ["lb", 4.07, 2.29, "May 26", 6.58, "Jun 26", [123, 129, null, null, 54, 102, 86, null, null, null, null, null]], "peaches": ["each", 1.32, 1.0, "Jan 25", 2.02, "Oct 25", [null, 118, null, null, 85, 77, 85, 103, 101, 113, null, null]], "nectarines": ["each", 1.21, 0.95, "Sep 26", 1.41, "May 25", [null, null, null, null, 97, 92, 91, 95, 93, 125, null, null]], "grapes": ["lb", 3.35, 2.46, "Mar 25", 4.17, "Jan 25", [117, 104, 95, 110, 113, 96, 101, 88, 86, 89, 96, 108]], "figs": ["pack", 0.88, 0.67, "Feb 26", 1.1, "Dec 25", [101, 89, 88, 95, 95, 92, 100, 103, null, null, 119, 111]], "pomegranates": ["each", 3.21, 2.34, "Oct 25", 4.27, "Feb 26", [108, 116, 102, 111, 111, 104, 99, null, 81, 84, 96, 92]], "persimmons": ["lb", 3.49, 1.64, "Nov 25", 5.33, "Jul 26", [74, null, null, null, null, null, 152, 148, 136, 71, 54, 54]], "dates": ["lb", 4.92, 2.8, "Nov 25", 7.64, "Apr 26", [null, null, null, 144, 141, null, null, 93, 95, 71, 67, null]], "clementines": ["lb", 2.13, 1.92, "Aug 25", 2.57, "Feb 25", [98, 105, 109, 100, 99, 103, 96, 93, 93, 97, 105, 103]], "mandarins": ["lb", 1.83, 1.31, "Jul 25", 2.19, "Nov 25", [109, 112, 102, 102, 109, 83, 77, 88, 95, 109, 107, 105]], "oranges": ["each", 0.69, 0.52, "Aug 25", 1.24, "Jun 25", [97, 94, 91, 105, 110, 126, 101, 106, null, 81, 91, 92]], "caracara": ["lb", 1.64, 1.09, "Aug 26", 2.41, "Oct 25", [104, 97, 99, 99, 96, null, null, 81, 87, 110, 131, 112]], "bloodoranges": ["lb", 1.96, 1.44, "Jul 25", 2.7, "Jan 26", [116, 94, 106, 86, null, null, null, null, null, 112, null, null]], "grapefruit": ["each", 1.18, 0.84, "Feb 25", 1.56, "Nov 25", [105, 98, 99, 100, 102, 92, 92, 85, 108, 103, 114, 100]], "lemons": ["each", 0.49, 0.34, "Mar 25", 0.68, "Jul 26", [88, 78, 77, 86, 100, 112, 117, 111, 111, 107, 113, 98]], "limes": ["each", 0.41, 0.24, "Jul 26", 0.72, "Apr 26", [100, 106, 137, 133, 118, 98, 74, 72, 105, 100, 81, 76]], "pomelos": ["each", 3.35, 1.79, "Oct 25", 5.69, "Aug 25", [66, 69, 82, 103, 126, 140, 135, 151, 116, 69, 67, 64]], "mangoes": ["lb", 2.95, 2.2, "Jun 25", 4.01, "Oct 25", [123, 103, 89, 83, 81, 78, 82, 88, 128, 113, 125, 103]], "pineapple": ["each", 5.31, 4.56, "Oct 26", 5.81, "Sep 25", [96, 99, 98, 100, 105, 104, 103, 104, 106, 95, 97, 95]], "lychees": ["lb", 4.02, 2.65, "Jun 26", 8.0, "May 25", [null, null, null, null, 158, 110, 80, 86, 78, null, null, null]], "avocados": ["lb", 2.53, 1.67, "Dec 25", 4.25, "Apr 25", [97, 100, 109, 126, 125, 110, 104, 95, 89, 82, 87, 83]], "kiwis": ["lb", 4.94, 4.04, "Feb 26", 6.07, "Oct 25", [92, 91, 91, 91, 106, 103, 105, 112, 111, 107, 94, 94]], "bananas": ["lb", 1.11, 0.99, "Apr 26", 1.27, "Mar 26", [100, 99, 106, 97, 97, 98, 101, 102, 102, 101, 98, 98]], "cantaloupe": ["each", 3.71, 2.6, "Aug 26", 5.94, "Jan 25", [119, 118, 112, 113, 99, 89, 108, 74, 85, 87, 94, 107]], "watermelon": ["each", 5.13, 3.94, "Oct 26", 6.24, "May 26", [112, 107, 103, 103, 103, 96, 98, 103, 95, 84, 98, 101]], "rhubarb": ["lb", 1.99, 1.88, "Jul 26", 2.11, "Sep 26", [null, null, null, null, 103, 101, 99, 103, 104, 97, null, null]], "lettuce": ["each", 1.98, 1.51, "Aug 26", 3.47, "Nov 25", [93, 97, 110, 105, 115, 94, 88, 81, 85, 104, 124, 104]], "spinach": ["bunch", 1.69, 1.31, "Jul 26", 2.59, "Feb 26", [113, 115, 95, 98, 102, 88, 84, 93, 97, 99, 105, 112]], "chard": ["each", 3.16, 2.74, "Jul 26", 3.68, "Apr 25", [100, 108, 106, 109, 106, 97, 89, 92, 92, 98, 101, 104]], "kale": ["bunch", 1.3, 1.05, "May 26", 1.58, "Mar 25", [102, 108, 113, 110, 98, 87, 93, 96, 89, 97, 102, 106]], "bokchoy": ["lb", 1.1, 0.86, "Sep 26", 1.44, "May 26", [82, 91, 106, 119, 125, 85, 79, 90, 100, 111, 113, 96]], "radicchio": ["each", 4.21, 2.7, "Sep 26", 4.58, "Mar 25", [106, 108, 102, 115, 106, 105, 105, 105, 95, 90, 87, 90]], "endive": ["lb", 3.0, 2.92, "Apr 26", 3.02, "Jan 25", [101, 101, 100, 99, 100, 100, 100, 100, 100, 100, 101, 101]], "herbs": ["bunch", 0.96, 0.67, "May 26", 1.27, "Feb 25", [92, 97, 96, 113, 92, 107, 91, 92, 98, 103, 114, 105]], "sprouts": ["lb", 8.83, 4.59, "Jan 25", 9.03, "Apr 25", [99, 119, 99, 100, 100, 100, 100, 100, 100, 104, 80, 99]], "cabbage": ["lb", 0.76, 0.64, "Mar 26", 0.89, "Jun 25", [96, 96, 97, 114, 106, 112, 104, 96, 95, 94, 96, 97]], "napa": ["lb", 1.09, 0.77, "Jan 26", 1.57, "Mar 25", [74, 104, 123, 120, 104, 87, 86, 99, 119, 105, 91, 87]], "broccoli": ["lb", 2.11, 1.69, "Aug 25", 3.05, "May 26", [98, 94, 90, 102, 112, 108, 103, 89, 98, 99, 108, 99]], "cauliflower": ["each", 3.54, 2.84, "Aug 26", 4.96, "Feb 26", [96, 106, 97, 97, 109, 94, 88, 85, 100, 104, 113, 110]], "brussels": ["lb", 2.29, 1.6, "Apr 26", 3.69, "May 25", [104, 98, 83, 79, 117, 97, 125, 133, 97, 88, 87, 95]], "kohlrabi": ["lb", 1.47, 1.07, "Jul 25", 1.95, "Apr 26", [108, 92, 83, 100, 103, 100, 123, 87, null, 94, 90, 112]], "tomatoes": ["lb", 1.8, 1.28, "Feb 25", 3.19, "Apr 26", [118, 98, 111, 119, 106, 84, 84, 93, 88, 91, 103, 106]], "peppers": ["lb", 2.52, 1.7, "Sep 26", 3.8, "Dec 25", [129, 123, 121, 95, 84, 78, 88, 89, 75, 78, 95, 152]], "hotpeppers": ["lb", 3.84, 2.77, "Sep 26", 5.35, "Apr 26", [101, 93, 92, 110, 111, 112, 101, 95, 86, 92, 101, 111]], "cucumbers": ["each", 1.38, 1.04, "Feb 25", 1.75, "Mar 26", [109, 104, 102, 95, 86, 89, 91, 98, 110, 109, 104, 100]], "zucchini": ["lb", 1.42, 1.08, "Aug 26", 1.88, "Mar 26", [123, 117, 108, 96, 107, 106, 76, 75, 88, 101, 104, 98]], "eggplant": ["lb", 1.98, 1.32, "Apr 25", 2.33, "Nov 25", [104, 101, 93, 82, 94, 104, 104, 104, 97, 108, 116, 91]], "corn": ["each", 0.96, 0.6, "Sep 25", 1.8, "Apr 26", [113, 117, 93, 121, 86, 96, 94, 78, 67, 90, 136, 112]], "beans": ["lb", 3.93, 2.77, "Oct 25", 5.61, "Jan 25", [124, 113, 117, 121, 103, 104, 88, 78, 79, 76, 112, 94]], "peas": ["lb", 4.0, 3.06, "Jun 25", 5.03, "Sep 25", [105, 95, 86, 89, 88, 88, 91, 102, 106, 114, 117, 115]], "squash": ["lb", 1.2, 0.87, "Dec 25", 1.62, "Jul 26", [102, 106, 108, 106, 109, 112, 124, 111, 86, 78, 81, 83]], "pumpkin": ["lb", 1.27, 1.02, "Aug 26", 1.56, "Sep 25", [null, null, null, null, null, null, null, null, 108, 100, null, null]], "potatoes": ["lb", 0.75, 0.65, "Jan 25", 0.96, "Jul 25", [93, 92, 96, 96, 99, 105, 112, 104, 105, 104, 99, 94]], "sweetpotatoes": ["lb", 1.32, 1.19, "Mar 25", 1.56, "Mar 26", [95, 94, 99, 99, 98, 104, 108, 107, 107, 97, 98, 95]], "carrots": ["lb", 1.0, 0.81, "Aug 26", 1.34, "Apr 26", [106, 109, 109, 117, 114, 110, 98, 88, 85, 85, 86, 97]], "beets": ["lb", 1.32, 1.16, "Mar 26", 1.71, "Sep 26", [90, 94, 94, 97, 103, 107, 108, 117, 109, 101, 90, 90]], "parsnips": ["lb", 2.54, 2.31, "Oct 26", 2.84, "Apr 25", [100, 101, 101, 102, 103, 102, 101, 103, 95, 96, 98, 98]], "rutabaga": ["lb", 1.01, 0.94, "Feb 25", 1.16, "Jun 25", [95, 97, 99, 99, 105, 108, 108, 105, 102, 96, 94, 95]], "celeriac": ["lb", 3.07, 2.6, "May 26", 6.58, "Aug 25", [82, 80, 80, 83, 80, 109, 108, 148, 133, 106, 109, 81]], "radishes": ["bunch", 1.13, 0.66, "Feb 25", 1.59, "Jan 26", [110, 100, 88, 123, 98, 88, 92, 112, 123, 101, 71, 92]], "onions": ["lb", 0.71, 0.58, "Nov 25", 0.99, "Jul 26", [95, 96, 102, 101, 106, 117, 118, 102, 94, 92, 88, 90]], "garlic": ["lb", 1.64, 1.32, "Jun 26", 2.06, "Mar 25", [101, 102, 102, 102, 103, 102, 92, 97, 96, 100, 101, 101]], "shallots": ["lb", 3.02, 1.36, "Apr 26", 4.29, "Mar 26", [86, 86, 117, 86, 117, 117, 117, 117, 115, 75, 87, 87]], "leeks": ["lb", 1.73, 1.5, "Oct 25", 2.4, "Mar 25", [86, 108, 119, 113, 101, 106, 109, 102, 89, 89, 95, 86]], "greenonions": ["bunch", 0.88, 0.57, "Mar 25", 1.37, "Oct 26", [118, 107, 91, 87, 81, 85, 100, 107, 122, 122, 75, 98]], "asparagus": ["lb", 5.78, 3.02, "Mar 25", 8.52, "Oct 26", [134, 82, 59, 92, 91, 81, 100, 118, 122, 117, 97, 101]], "fiddleheads": ["lb", 16.1, 12.62, "Jul 26", 19.56, "May 26", [null, null, null, 105, 103, 103, 83, null, null, null, null, null]], "celery": ["each", 2.43, 1.75, "Sep 25", 3.91, "Feb 26", [120, 114, 98, 93, 114, 108, 90, 84, 78, 89, 100, 116]], "fennel": ["bunch", 2.43, 1.58, "Oct 26", 4.11, "Jul 26", [98, 99, 96, 91, 96, 110, 124, 112, 107, 85, 90, 95]], "artichokes": ["each", 2.58, 1.99, "Jul 25", 3.95, "Oct 26", [95, 90, 91, 96, 100, 109, 110, 98, 102, 110, 98, 96]], "mushrooms": ["lb", 3.88, 3.49, "Dec 25", 4.32, "Jul 26", [100, 100, 100, 100, 100, 105, 107, 103, 96, 97, 98, 96]]};
+
+// Flyer deals, rebuilt weekly by /mnt/project-files/prices/build_deals.py. Keyed by row id.
+/*DEALS*/const DEALS = {"apples": {"best_now": "Other", "Other": {"now": {"price": "Marché Salaberry $0.79/lb", "item": "POMME GRANNY SMITH", "to": "Nov 18", "from": "Nov 12", "lb": 0.79}}, "IGA": {"now": {"price": "$3.47", "item": "POMMES CORTLAND, EMPIRE OU SPARTAN BIOLOGIQUES", "to": "Nov 18", "from": "Nov 12", "reg": 4.99}}, "Maxi": {"now": {"price": "$3.00/lb", "item": "POMMES HONEYCRISP", "to": "Nov 18", "from": "Nov 12", "lb": 3.0}}}, "grapefruit": {"Other": {"now": {"price": "Marché Salaberry $0.99", "item": "PAMPLEMOUSSE ROSE", "to": "Nov 18", "from": "Nov 5"}}, "IGA": {"now": {"price": "$5.99", "item": "PAMPLEMOUSSES COMPLIMENTS", "to": "Nov 18", "from": "Nov 12", "reg": 6.99}}}, "lemons": {"Other": {"now": {"price": "Adonis $0.50 each", "item": "citrons", "to": "Nov 18", "from": "Nov 12"}}, "Metro": {"now": {"price": "$4.99", "item": "CITRONS BIOLOGIQUES", "to": "Nov 18", "from": "Nov 12", "reg": 5.99}}, "Maxi": {"now": {"price": "$5.00 (sac de 3 lb)", "item": "CITRONS, SAC DE 3 LB, PRODUIT D'AFRIQUE DU SUD OU LIMES, SAC DE 1,5 LB, PRODUIT DU MEXIQUE NATURELLEMENT IMPARFAITS SANS NOM®", "to": "Nov 18", "from": "Nov 12"}}}, "carrots": {"Other": {"now": {"price": "Walmart $2.74", "item": "Carottes Mon marché fraicheur", "to": "Dec 9", "from": "Nov 12"}}, "Metro": {"now": {"price": "$1.77", "item": "CAROTTES", "to": "Nov 18", "from": "Nov 12", "lb": 0.885, "reg": 3.77}}, "IGA": {"now": {"price": "$1.77", "item": "CAROTTES OU OIGNONS JAUNES", "to": "Nov 18", "from": "Nov 12", "reg": 2.99}}, "Maxi": {"now": {"price": "$2.50 (sac de 3lb)", "item": "CAROTTES OU OIGNONS JAUNES, SAC DE 3LB OU CAROTTES MINIATURES, 340 G DÉLICES DU MARCHÉ OU NANTAISES, 454 G", "to": "Nov 18", "from": "Nov 12"}}}, "lettuce": {"Other": {"now": {"price": "Marché Salaberry 2 for $1.00", "item": "LAITUE BOSTON", "to": "Nov 18", "from": "Nov 5"}}, "Maxi": {"now": {"price": "$3.55 (2 un)", "item": "LAITUE DUO GEN V, 2 UN", "to": "Nov 18", "from": "Nov 12"}}, "Metro": {"now": {"price": "$3.98", "item": "LAITUE DUO \"GEN V", "to": "Nov 18", "from": "Nov 12", "reg": 4.99}}, "IGA": {"now": {"price": "$3.99", "item": "LAITUE BOSTON OU CROQUANTE", "to": "Nov 18", "from": "Nov 12", "reg": 4.09}}}, "mushrooms": {"Other": {"now": {"price": "Super C $1.47", "item": "champignons blancs", "to": "Nov 18", "from": "Nov 12"}}, "IGA": {"now": {"price": "$2.49", "item": "CHAMPIGNONS BLANCS ENTIERS OU TRANCHÉS COMPLIMENTS", "to": "Nov 18", "from": "Nov 12", "reg": 2.99}}, "Metro": {"now": {"price": "2 for $5.00", "item": "CHAMPIGNONS MIEUX-ÊTRE BIOLOGIQUE", "to": "Nov 18", "from": "Nov 12"}}, "Maxi": {"now": {"price": "$2.00 (227 g)", "item": "CHAMPIGNONS ENTIERS BLANCS PC, 227 g", "to": "Nov 18", "from": "Nov 12"}}}, "kiwis": {"Other": {"now": {"price": "Super C $3.97", "item": "kiwis jaunes sucrés Sungold", "to": "Nov 18", "from": "Nov 12", "reg": 6.99}}, "Maxi": {"now": {"price": "$1.00", "item": "AVOCATS, PRODUIT DU MEXIQUE, MANGUES ROUGES OU KIWIS", "to": "Nov 18", "from": "Nov 12"}}, "Metro": {"now": {"price": "$0.98 each", "item": "KIWI", "to": "Nov 18", "from": "Nov 12", "reg": 1.25}}}, "pears": {"best_now": "IGA", "IGA": {"now": {"price": "$1.99/lb with Scène+", "item": "POIRES BOSC", "to": "Nov 18", "from": "Nov 12", "lb": 1.99}}, "Other": {"now": {"price": "Adonis $1.99/lb", "item": "poires Bartlett ou Bosc", "to": "Nov 18", "from": "Nov 12", "lb": 1.99}}, "Metro": {"now": {"price": "$6.99", "item": "FIGUE DE BARBARIE (POIRE CACTUS)", "to": "Nov 18", "from": "Nov 12", "reg": 7.99}}}, "grapes": {"best_now": "Maxi", "IGA": {"now": {"price": "$2.97/lb", "item": "RAISINS ROUGES SANS PÉPINS", "to": "Nov 18", "from": "Nov 12", "lb": 2.97}}, "Maxi": {"now": {"price": "$1.67/lb", "item": "RAISINS ROUGES SANS PÉPINS", "to": "Nov 18", "from": "Nov 12", "lb": 1.67}}, "Other": {"now": {"price": "Super C $3.97/lb", "item": "raisins rouges ou verts sans pépins", "to": "Nov 18", "from": "Nov 12", "lb": 3.97}}, "Metro": {"now": {"price": "$5.99 members", "item": "RAISINS COTTON CANDY VERTS SANS PÉPINS", "to": "Nov 18", "from": "Nov 12", "reg": 6.99}}}, "strawberries": {"Metro": {"now": {"price": "$5.99", "item": "FRAISES DE SERRE", "to": "Nov 18", "from": "Nov 12", "reg": 6.99}}, "Maxi": {"now": {"price": "$6.50 (340 g)", "item": "fraises cultivées en serre PC, 340 g", "to": "Nov 18", "from": "Nov 12"}}}, "blueberries": {"Other": {"now": {"price": "Walmart $3.84", "item": "Bleuets", "to": "Nov 18", "from": "Nov 12"}}, "Metro": {"now": {"price": "$2.44", "item": "BLEUETS, BLEUETS JUMBO", "to": "Nov 18", "from": "Nov 12", "reg": 4.99}}}, "raspberries": {"Other": {"now": {"price": "Super C $1.97", "item": "framboises", "to": "Nov 18", "from": "Nov 12", "reg": 4.99}}, "Metro": {"now": {"price": "$3.99", "item": "FRAMBOISES OU MÛRES", "to": "Nov 18", "from": "Nov 12", "reg": 4.99}}, "IGA": {"now": {"price": "$3.99", "item": "FRAMBOISES", "to": "Nov 18", "from": "Nov 12", "reg": 5.99}}, "Maxi": {"now": {"price": "$4.00", "item": "MÛRES OU FRAMBOISES", "to": "Nov 18", "from": "Nov 12"}}}, "blackberries": {"Metro": {"now": {"price": "$3.99", "item": "FRAMBOISES OU MÛRES", "to": "Nov 18", "from": "Nov 12", "reg": 4.99}}, "Other": {"now": {"price": "Super C $2.97", "item": "mûres, grenade", "to": "Nov 18", "from": "Nov 12"}}, "Maxi": {"now": {"price": "$4.00", "item": "MÛRES OU FRAMBOISES", "to": "Nov 18", "from": "Nov 12"}}}, "watermelon": {"IGA": {"now": {"price": "$1.69/lb", "item": "MELON D'EAU SANS PÉPINS", "to": "Nov 18", "from": "Nov 12", "lb": 1.69}}, "Other": {"now": {"price": "Adonis $6.99 each", "item": "MINI MELON D'EAU", "to": "Nov 18", "from": "Nov 12", "reg": 7.99}}}, "clementines": {"best_now": "Other", "Metro": {"now": {"price": "$3.99", "item": "CLÉMENTINES", "to": "Nov 18", "from": "Nov 12", "reg": 6.99}}, "Other": {"now": {"price": "Provigo $5.88", "item": "CLÉMENTINES", "to": "Nov 18", "from": "Nov 12", "lb": 1.176}}, "Maxi": {"now": {"price": "$6.00 (4 lb)", "item": "CLÉMENTINES, 4 LB", "to": "Nov 18", "from": "Nov 12", "lb": 1.5}}}, "oranges": {"best_now": "Other", "Other": {"now": {"price": "Adonis $2.99 each (3 lb)", "item": "ORANGES 3 LB, AVOCATS 5-6 UN., CITRONS 2 LB ET OIGNONS JAUNES 5 LB", "to": "Nov 18", "from": "Nov 12"}}}, "avocados": {"Other": {"now": {"price": "Adonis $2.99 each (3 lb)", "item": "ORANGES 3 LB, AVOCATS 5-6 UN., CITRONS 2 LB ET OIGNONS JAUNES 5 LB", "to": "Nov 18", "from": "Nov 12"}}, "Maxi": {"now": {"price": "$5.00 (sac de 2,2 lb)", "item": "AVOCATS SANS NOM® NATURELLEMENT IMPARFAITS, SAC DE 2,2 LB", "to": "Nov 18", "from": "Nov 12", "lb": 2.273}}, "Metro": {"now": {"price": "$1.99", "item": "AVOCATS BIOLOGIQUES", "to": "Nov 18", "from": "Nov 12", "reg": 2.49}}, "IGA": {"now": {"price": "$6.00", "item": "AVOCATS HASS", "to": "Nov 18", "from": "Nov 12", "reg": 12.0}}}, "onions": {"best_now": "Metro", "Other": {"now": {"price": "Provigo $2.00/lb", "item": "OIGNONS ROUGES", "to": "Nov 18", "from": "Nov 12", "lb": 2.0}}, "IGA": {"now": {"price": "$1.77", "item": "CAROTTES OU OIGNONS JAUNES", "to": "Nov 18", "from": "Nov 12", "reg": 2.99}}, "Maxi": {"now": {"price": "$2.50 (sac de 3lb)", "item": "CAROTTES OU OIGNONS JAUNES, SAC DE 3LB OU CAROTTES MINIATURES, 340 G DÉLICES DU MARCHÉ OU NANTAISES, 454 G", "to": "Nov 18", "from": "Nov 12"}}, "Metro": {"now": {"price": "$1.99/lb", "item": "GROS OIGNONS ROUGES", "to": "Nov 18", "from": "Nov 12", "lb": 1.99}}}, "mandarins": {"Other": {"now": {"price": "Walmart $3.98", "item": "Mandarines Mon marché fraîcheur", "to": "Nov 18", "from": "Nov 12"}}, "IGA": {"now": {"price": "$5.99/lb", "item": "MANDARINES SUMO", "to": "Nov 18", "from": "Nov 12", "lb": 5.99}}}, "mangoes": {"Other": {"now": {"price": "Adonis $1.99 each", "item": "mangues rouges ou Ataulfo", "to": "Nov 18", "from": "Nov 12", "reg": 2.99}}, "Maxi": {"now": {"price": "$1.00", "item": "AVOCATS, PRODUIT DU MEXIQUE, MANGUES ROUGES OU KIWIS", "to": "Nov 18", "from": "Nov 12"}}, "Metro": {"now": {"price": "$2.69 each", "item": "GROSSE MANGUE ROUGE", "to": "Nov 18", "from": "Nov 12", "reg": 2.99}}, "IGA": {"now": {"price": "$6.00", "item": "MANGUES ROUGES", "to": "Nov 18", "from": "Nov 12", "reg": 12.0}}}, "pineapple": {"Other": {"now": {"price": "Super C $2.97", "item": "ananas Tropical Gold", "to": "Nov 18", "from": "Nov 12", "reg": 3.49}}, "Metro": {"now": {"price": "$4.99 (550 g)", "item": "GROS ANANAS TROPICAL GOLD IMPORTÉ DU COSTA RICA, GR 6 OU ANANAS DÉCORTIQUÉ 550 G", "to": "Nov 18", "from": "Nov 12", "reg": 5.99}}}, "pomegranates": {"Other": {"now": {"price": "Super C $2.97", "item": "mûres, grenade", "to": "Nov 18", "from": "Nov 12"}}, "Metro": {"now": {"price": "$1.99 each", "item": "GRENADE", "to": "Nov 18", "from": "Nov 12", "reg": 3.99}}}, "persimmons": {"best_now": "Other", "Other": {"now": {"price": "Avril $2.99", "item": "Californie kakis bios", "to": "Nov 18", "from": "Nov 12", "reg": 4.99}}}, "figs": {"best_now": "Other", "Other": {"now": {"price": "Super C $14.99", "item": "figues fraîches", "to": "Nov 18", "from": "Nov 12"}}}, "limes": {"best_now": "Other", "Other": {"now": {"price": "Super C $3.97", "item": "limes", "to": "Nov 18", "from": "Nov 12"}}}, "dates": {"best_now": "Other", "Other": {"now": {"price": "Super C $2.49 members", "item": "dattes Borna", "to": "Nov 18", "from": "Nov 12"}}}, "plums": {"IGA": {"now": {"price": "$5.99", "item": "PRUNES NOIRES", "to": "Nov 18", "from": "Nov 12", "reg": 7.99}}, "Maxi": {"now": {"price": "$3.00/lb", "item": "PRUNES NOIRES", "to": "Nov 18", "from": "Nov 12", "lb": 3.0}}}, "herbs": {"Other": {"now": {"price": "Adonis $0.99 each", "item": "PERSIL ITALIEN", "to": "Nov 18", "from": "Nov 12"}}, "Metro": {"now": {"price": "$1.77", "item": "CORIANDRE", "to": "Nov 18", "from": "Nov 12", "reg": 1.99}}}, "spinach": {"IGA": {"now": {"price": "$4.99", "item": "JEUNES ÉPINARDS, MÉLANGE PRINTANIER OU ROQUETTE BIOLOGIQUES", "to": "Nov 18", "from": "Nov 12", "reg": 5.99}}, "Other": {"now": {"price": "Super C $1.77", "item": "épinards, radis en feuilles", "to": "Nov 18", "from": "Nov 12"}}}, "arugula": {"best_now": "IGA", "IGA": {"now": {"price": "$4.99", "item": "JEUNES ÉPINARDS, MÉLANGE PRINTANIER OU ROQUETTE BIOLOGIQUES", "to": "Nov 18", "from": "Nov 12", "reg": 5.99}}}, "shallots": {"best_now": "Metro", "Metro": {"now": {"price": "$2.99", "item": "ÉCHALOTES BIOLOGIQUES", "to": "Nov 18", "from": "Nov 12"}}}, "endive": {"best_now": "Other", "Other": {"now": {"price": "Adonis $5.99/lb", "item": "endives", "to": "Nov 18", "from": "Nov 12", "lb": 5.99}}}, "pomelos": {"Other": {"now": {"price": "Walmart $2.98", "item": "Pomélo", "to": "Nov 18", "from": "Nov 12"}}, "IGA": {"now": {"price": "2 for $4.98", "item": "POMELO", "to": "Nov 18", "from": "Nov 12"}}}, "asparagus": {"best_now": "Maxi", "Maxi": {"now": {"price": "$6.99 (325 g)", "item": "ASPERGES, 325 G", "to": "Nov 18", "from": "Nov 12"}}}, "cantaloupe": {"Other": {"now": {"price": "Super C $3.97", "item": "Cantaloup", "to": "Nov 18", "from": "Nov 12"}}, "Metro": {"now": {"price": "$5.99", "item": "JUMBO CANTALOUPE", "to": "Nov 18", "from": "Nov 12", "reg": 6.99}}}, "hotpeppers": {"Other": {"now": {"price": "Adonis $1.99", "item": "OLIVES VERTES FARCIES AU PIMENTS ROUGES", "to": "Dec 24", "from": "Nov 12"}}, "IGA": {"now": {"price": "$3.99", "item": "PIMENTS FORTS", "to": "Nov 18", "from": "Nov 12", "reg": 4.99}}}, "sunchokes": {"best_now": "Metro", "Metro": {"now": {"price": "$3.99", "item": "TOPINAMBOUR", "to": "Nov 18", "from": "Nov 12", "reg": 4.99}}}, "greenonions": {"Other": {"now": {"price": "Adonis $0.99 each", "item": "OIGNONS VERTS", "to": "Nov 18", "from": "Nov 12"}}, "Metro": {"now": {"price": "$1.77", "item": "OIGNONS VERTS", "to": "Nov 18", "from": "Nov 12"}}, "Maxi": {"now": {"price": "$2.00", "item": "OIGNONS VERTS", "to": "Nov 18", "from": "Nov 12"}}}, "bloodoranges": {"best_now": "Metro", "Metro": {"now": {"price": "$3.99/lb", "item": "ORANGE SANGUINE", "to": "Nov 18", "from": "Nov 12", "lb": 3.99, "reg": 4.99}}}, "potatoes": {"best_now": "Maxi", "Metro": {"now": {"price": "$0.99", "item": "PETITES POMMES DE TERRE BLANCHES, ROUGES OU À CHAIR JAUNE", "to": "Nov 18", "from": "Nov 12", "reg": 2.99}}, "IGA": {"now": {"price": "$1.92", "item": "POMMES DE TERRE RUSSET", "to": "Nov 18", "from": "Nov 12", "reg": 6.99}}, "Other": {"now": {"price": "Super C $1.99/lb", "item": "pommes de terre douces violettes", "to": "Nov 18", "from": "Nov 12", "lb": 1.99}}, "Maxi": {"now": {"price": "$4.00 (sac de 10 lb)", "item": "POMMES DE TERRE ROUGES OU JAUNES DÉLICES DU MARCHÉ, SAC DE 10 LB", "to": "Nov 18", "from": "Nov 12", "lb": 0.4}}}, "sweetpotatoes": {"Other": {"now": {"price": "Super C $1.49/lb", "item": "patates douces", "to": "Nov 18", "from": "Nov 12", "lb": 1.49}}, "IGA": {"now": {"price": "$4.99", "item": "PATATES DOUCES TOUT PRÊT", "to": "Nov 18", "from": "Nov 12", "reg": 5.99}}}, "squash": {"best_now": "Maxi", "Other": {"now": {"price": "Adonis $1.49/lb", "item": "COURGES DURES", "to": "Nov 18", "from": "Nov 12", "lb": 1.49}}, "Metro": {"now": {"price": "$1.99", "item": "COURGES", "to": "Nov 18", "from": "Nov 12"}}, "Maxi": {"now": {"price": "$1.00/lb", "item": "COURGE POIVRÉE, BUTTERCUP, MUSQUÉE OU SPAGHETTI", "to": "Nov 18", "from": "Nov 12", "lb": 1.0, "reg": 1.49}}}, "beets": {"Other": {"now": {"price": "Adonis $3.99 each", "item": "BETTERAVES OU CAROTTES", "to": "Nov 18", "from": "Nov 12", "reg": 4.99}}, "IGA": {"now": {"price": "$2.47", "item": "BETTERAVES BIOLOGIQUES", "to": "Nov 18", "from": "Nov 12", "reg": 3.99}}}, "garlic": {"best_now": "Metro", "Metro": {"now": {"price": "$3.99", "item": "AIL", "to": "Nov 18", "from": "Nov 12", "reg": 4.99}}}, "leeks": {"Other": {"now": {"price": "Avril $1.49/lb", "item": "Québec poireaux bios", "to": "Nov 18", "from": "Nov 12", "lb": 1.49}}, "IGA": {"now": {"price": "$2.99", "item": "POIREAUX TRANCHES", "to": "Nov 18", "from": "Nov 12", "reg": 3.49}}, "Metro": {"now": {"price": "$3.69", "item": "POIREAUX EN RONDELLES", "to": "Nov 18", "from": "Nov 12", "reg": 3.99}}}, "parsnips": {"best_now": "Metro", "Metro": {"now": {"price": "$3.99", "item": "PANAIS", "to": "Nov 18", "from": "Nov 12", "reg": 4.99}}}, "cabbage": {"best_now": "Other", "Other": {"now": {"price": "Adonis $0.99", "item": "CHOU ROUGE, VERT OU DE SAVOIE", "to": "Nov 18", "from": "Nov 12"}}}, "cauliflower": {"Other": {"now": {"price": "Walmart $3.76", "item": "Chou-fleur", "to": "Nov 18", "from": "Nov 12"}}, "Maxi": {"now": {"price": "$5.00", "item": "CHOU-FLEUR", "to": "Nov 18", "from": "Nov 12"}}}, "broccoli": {"Metro": {"now": {"price": "$1.44 each", "item": "COURONNE DE BROCOLI", "to": "Nov 18", "from": "Nov 12", "reg": 2.99}}, "Other": {"now": {"price": "Adonis $1.99 each", "item": "couronnes de brocoli", "to": "Nov 18", "from": "Nov 12", "reg": 2.99}}, "IGA": {"now": {"price": "$1.77", "item": "COURONNE DE BROCOLI", "to": "Nov 18", "from": "Nov 12", "reg": 2.99}}}, "brussels": {"best_now": "Maxi", "Maxi": {"now": {"price": "$4.00", "item": "CHOUX DE BRUXELLES", "to": "Nov 18", "from": "Nov 12"}}}, "celery": {"Other": {"now": {"price": "Adonis $2.99", "item": "CÉLERI", "to": "Nov 18", "from": "Nov 12", "reg": 3.99}}, "Metro": {"now": {"price": "$3.49 members", "item": "CÉLERI", "to": "Nov 18", "from": "Nov 12", "reg": 3.99}}}, "radishes": {"best_now": "Other", "Other": {"now": {"price": "Super C $1.77", "item": "épinards, radis en feuilles", "to": "Nov 18", "from": "Nov 12"}}}, "cucumbers": {"IGA": {"now": {"price": "$1.97", "item": "CONCOMBRE SANS PÉPINS BIOLOGIQUE", "to": "Nov 18", "from": "Nov 12", "reg": 3.99}}, "Other": {"now": {"price": "Adonis $2.99/lb", "item": "CONCOMBRES LIBANAIS", "to": "Nov 18", "from": "Nov 12", "lb": 2.99}}, "Maxi": {"now": {"price": "$1.00", "item": "CONCOMBRES ANGLAIS", "to": "Nov 18", "from": "Nov 12"}}}, "tomatoes": {"best_now": "Other", "Other": {"now": {"price": "Adonis $1.77/lb", "item": "tomates de serre beef", "to": "Nov 18", "from": "Nov 12", "lb": 1.77}}, "Metro": {"now": {"price": "$2.98/lb", "item": "TOMATES ROUGES EN GRAPPE", "to": "Nov 18", "from": "Nov 12", "lb": 2.98}}, "Maxi": {"now": {"price": "$3.00/lb", "item": "TOMATES BEEFSTEAK SAVOURA", "to": "Nov 18", "from": "Nov 12", "lb": 3.0}}, "IGA": {"now": {"price": "$2.49", "item": "TOMATES PASTENE", "to": "Nov 18", "from": "Nov 12", "reg": 2.99}}}, "peppers": {"best_now": "Other", "Other": {"now": {"price": "Super C $3.97/lb", "item": "poivrons rouges, orange ou jaunes de serre", "to": "Nov 18", "from": "Nov 12", "lb": 3.97}}, "Maxi": {"now": {"price": "$5.00", "item": "POIVRONS DOUX DÉLICES DU MARCHÉ", "to": "Nov 18", "from": "Nov 12"}}, "Metro": {"now": {"price": "$5.99/lb", "item": "POIVRONS JAUNES, ROUGES, ORANGE DE SERRE BIOLOGIQUE", "to": "Nov 18", "from": "Nov 12", "lb": 5.99}}}, "zucchini": {"best_now": "Other", "Other": {"now": {"price": "Adonis $1.99/lb", "item": "COURGETTES GRISES", "to": "Nov 18", "from": "Nov 12", "lb": 1.99}}, "Maxi": {"now": {"price": "$3.00/lb", "item": "AUBERGINE OU COURGETTE", "to": "Nov 18", "from": "Nov 12", "lb": 3.0}}}, "eggplant": {"best_now": "Other", "Other": {"now": {"price": "Adonis $1.99/lb", "item": "AUBERGINES", "to": "Nov 18", "from": "Nov 12", "lb": 1.99}}, "Maxi": {"now": {"price": "$3.00/lb", "item": "AUBERGINE OU COURGETTE", "to": "Nov 18", "from": "Nov 12", "lb": 3.0}}}, "fennel": {"best_now": "Other", "Other": {"now": {"price": "Adonis 2 for $5.00", "item": "anis-fenouil", "to": "Nov 18", "from": "Nov 12"}}}, "cranberries": {"last": {"store": "Metro", "price": "$2.99", "to": "Nov 11", "item": "CANNEBERGES BIOLOGIQUES"}}, "celeriac": {"last": {"store": "Super C", "price": "$0.99/lb", "to": "Nov 11", "item": "céleri rave"}}, "bananas": {"last": {"store": "Super C", "price": "$0.99/lb", "to": "Nov 11", "item": "melon Canari, bananes plantains"}}, "napa": {"last": {"store": "Super C", "price": "$0.99/lb", "to": "Nov 11", "item": "chou nappa"}}, "rutabaga": {"last": {"store": "Super C", "price": "$0.99/lb", "to": "Nov 11", "item": "rutabaga"}}, "caracara": {"last": {"store": "IGA", "price": "$5.99", "to": "Nov 11", "item": "ORANGES CARA CARA"}}, "beans": {"last": {"store": "Adonis", "price": "$3.99/lb", "to": "Nov 11", "item": "HARICOTS VERTS"}}}; const DEALS_DATE = "Nov 15, 2026";/*END*/
+
+// [id, English, French or origin, codes Jan..Dec, origin q|c|x, price key]
+// Codes: P peak, f fresh, s storage, g greenhouse (Quebec); C/c rest of Canada; I/i imported; . none
+const DATA = [
+  ["Berries and small fruit", [
+    ["strawberries","Strawberries","fraises (champ et serre)","gggggPPfffgg","q","strawberries"],
+    ["strawberries-ca","Strawberries","California","..IIIi......","x","strawberries"],
+    ["raspberries","Raspberries","framboises","......Pff...","q"],
+    ["blueberries","Blueberries","bleuets","......fPf...","q"],
+    ["blackberries","Blackberries","mûres",".......ff...","q"],
+    ["cranberries","Cranberries","canneberges","s.......fPss","q"],
+    ["groundcherries","Ground cherries","cerises de terre",".......PP...","q"]
+  ]],
+  ["Tree and vine fruit", [
+    ["apples","Apples","pommes","sssssssfPPss","q","apples"],
+    ["pears","Pears","poires","........ff..","q","pears"],
+    ["plums","Plums","prunes du Québec",".......fP...","q"],
+    ["cherries","Sweet cherries","Ontario, BC",".....cCc....","c"],
+    ["apricots","Apricots","Ontario, BC","......Cc....","c"],
+    ["peaches","Peaches","Ontario","......cCc...","c"],
+    ["nectarines","Nectarines","Ontario",".......Cc...","c"],
+    ["grapes","Grapes","Ontario",".......cCc..","c","grapes"],
+    ["figs","Fresh figs","California, Turkey","....ii.IIii.","x"],
+    ["pomegranates","Pomegranates","California","i.......iIIi","x"],
+    ["persimmons","Persimmons","Spain, Israel","i........iII","x"],
+    ["dates","Medjool dates","California, new crop",".........iII","x"]
+  ]],
+  ["Citrus and tropical", [
+    ["clementines","Clementines","Morocco, Spain","Ii.......iII","x"],
+    ["oranges","Navel oranges","California","IIIiii....iI","x","oranges"],
+    ["caracara","Cara Cara oranges","California","IIIii......i","x"],
+    ["bloodoranges","Blood oranges","Italy, California","IIIiii.....i","x"],
+    ["grapefruit","Grapefruit","Florida, Texas","IIIii....iiI","x"],
+    ["mandarins","Mandarins, satsumas","California, Japan","IIiii.....iI","x"],
+    ["meyer","Meyer lemons","California","IIiiiiiiiiiI","x"],
+    ["pomelos","Pomelos","China, California","Ii.........I","x"],
+    ["mangoes","Ataulfo mangoes","Mexico",".iIIIIIi....","x"],
+    ["pineapple","Pineapple","Costa Rica","iiIIIII...ii","x"],
+    ["lychees","Lychees","Mexico, Florida","....III.....","x"],
+    ["avocados","Avocados","Mexico, all year","IIiiii..iiII","x","avocado"],
+    ["lemons","Lemons","all year","IIIiiiiiiiiI","x","lemons"],
+    ["limes","Limes","all year","iiiiiiiiiiii","x","limes"],
+    ["kiwis","Kiwis","all year","iiiiiIIIi..i","x"],
+    ["bananas","Bananas","all year","iiiiiiiiiiii","x","bananas"]
+  ]],
+  ["Melons and rhubarb", [
+    ["cantaloupe","Cantaloupe","melon",".......PP...","q","cantaloupe"],
+    ["watermelon","Watermelon","melon d'eau",".......P....","q"],
+    ["rhubarb","Rhubarb","rhubarbe","....PPf.....","q"]
+  ]],
+  ["Greens and herbs", [
+    ["lettuce","Lettuce","laitue (champ et serre)","gggggPPfffgg","q","romaine"],
+    ["spinach","Spinach","épinards","....fP..ff..","q"],
+    ["arugula","Arugula","roquette","....fPffff..","q"],
+    ["chard","Swiss chard","bette à carde","......ffff..","q"],
+    ["kale","Kale","chou frisé","......ffPPf.","q"],
+    ["bokchoy","Bok choy","bok choy",".....Pfffff.","q"],
+    ["radicchio","Radicchio","radicchio","......ffPPf.","q"],
+    ["endive","Endive","endives","gggggggggggg","q"],
+    ["herbs","Herbs","fines herbes (champ et serre)","ggggggPPfggg","q"],
+    ["sprouts","Sprouts and microgreens","pousses","gggggggggggg","q"]
+  ]],
+  ["Cabbage family", [
+    ["cabbage","Cabbage","chou","ssss..ffPPss","q","cabbage"],
+    ["napa","Napa cabbage","chou nappa",".......PP...","q"],
+    ["broccoli","Broccoli","brocoli","......fPPf..","q","broccoli"],
+    ["cauliflower","Cauliflower","chou-fleur","......ffPf..","q"],
+    ["romanesco","Romanesco","chou romanesco","........PP..","q"],
+    ["brussels","Brussels sprouts","choux de Bruxelles","........fPf.","q"],
+    ["kohlrabi","Kohlrabi","chou-rave","......fPP...","q"]
+  ]],
+  ["Fruiting vegetables", [
+    ["tomatoes","Tomatoes","tomates (champ et serre)","ggggggfPPfgg","q","tomatoes"],
+    ["peppers","Peppers","poivrons (champ et serre)","..gggggPPfgg","q","peppers"],
+    ["hotpeppers","Hot peppers","piments forts",".......PP...","q"],
+    ["cucumbers","Cucumbers","concombres (champ et serre)","ggggggfPfggg","q","cucumber"],
+    ["zucchini","Zucchini","courgettes",".....fPPf...","q"],
+    ["eggplant","Eggplant","aubergines",".......PP...","q"],
+    ["tomatillos","Tomatillos","tomatillos",".......PP...","q"],
+    ["corn","Sweet corn","maïs sucré","......fPf...","q"],
+    ["beans","Green and yellow beans","haricots","......fPf...","q"],
+    ["peas","Peas","pois",".....fP.....","q"],
+    ["edamame","Edamame","fèves edamame",".......PP...","q"],
+    ["squash","Winter squash","courges","ss......fPss","q","squash"],
+    ["pumpkin","Pumpkin","citrouille","........PP..","q"]
+  ]],
+  ["Roots, tubers and onions", [
+    ["potatoes","Potatoes","pommes de terre","ssssssfPPfss","q","potatoes"],
+    ["sweetpotatoes","Sweet potatoes","patates douces","ss.......fPs","q","sweetpotatoes"],
+    ["carrots","Carrots","carottes","sssss.fPPPss","q","carrots"],
+    ["beets","Beets","betteraves","sss....fPPss","q"],
+    ["parsnips","Parsnips","panais","sss.....fPPs","q"],
+    ["rutabaga","Rutabaga","rutabaga","sss......PPs","q"],
+    ["celeriac","Celeriac","céleri-rave","sss.....PPss","q"],
+    ["sunchokes","Jerusalem artichokes","topinambours","sss......PPs","q"],
+    ["radishes","Radishes","radis","....fPffff..","q"],
+    ["onions","Onions","oignons","sssss..PPsss","q","onions"],
+    ["garlic","Garlic","ail","sss....PPsss","q"],
+    ["shallots","Shallots","échalotes françaises","sss.....fPss","q"],
+    ["leeks","Leeks","poireaux",".......fPPf.","q"],
+    ["greenonions","Green onions","oignons verts",".....fPff...","q"],
+    ["scapes","Garlic scapes","fleurs d'ail",".....fP.....","q"],
+    ["ramps","Ramps","ail des bois, Ontario","....C.......","c"]
+  ]],
+  ["Stalks, shoots and mushrooms", [
+    ["asparagus","Asparagus","asperges","....PP......","q"],
+    ["fiddleheads","Fiddleheads","têtes de violon","....P.......","q"],
+    ["celery","Celery","céleri",".......fPPf.","q","celery"],
+    ["fennel","Fennel","fenouil",".......fff..","q"],
+    ["artichokes","Artichokes","California","iiIIIiiiiiii","x"],
+    ["mushrooms","Mushrooms","champignons","gggggggggggg","q","mushrooms"],
+    ["chanterelles","Chanterelles","chanterelles sauvages","......fPf...","q"]
+  ]]
+];
+
+const DISAGREE = [
+  "Neither source you sent is Quebec data. Sobeys is Ontario only, and its month chart is an image that wouldn't load, so only its written notes were used. Canadian Food Focus states no region, and its dates run two to four weeks ahead of Quebec. I added Mangez Québec as the Quebec reference.",
+  "Strawberries: Canadian Food Focus starts in May. Quebec field berries start mid June. Both agree they run to October thanks to day-neutral varieties.",
+  "Haskap: Canadian Food Focus says April to July. April is impossible outdoors here; Mangez Québec says mid June to mid July, which I used.",
+  "Rhubarb: Canadian Food Focus says April to July. Mangez Québec prints late August to early October, which looks like an error on their site. Quebec rhubarb is a May and June crop.",
+  "Asparagus: Mangez Québec prints only early to mid June. Canadian Food Focus says May and June. Quebec asparagus usually starts mid May, so I used May and June.",
+  "Blueberries: Canadian Food Focus says June to September; Mangez Québec says late July to early August, which covers cultivated berries only. Wild berries run August into September.",
+  "Sweet corn: Canadian Food Focus runs July to October, Mangez Québec August only. I used late July to September with an August peak.",
+  "Eggplant: Canadian Food Focus says April to October because it folds in greenhouse crops. Field eggplant here is mid August to September.",
+  "Parsnips: Mangez Québec lists late June to August; Canadian Food Focus omits them. Parsnips taste best dug after frost, so I marked fall as peak. This one is my call, not either source's.",
+  "Apples: Canadian Food Focus lists every month except August. That August gap is real: last year's storage apples run out just before the new crop."
+];
+
+const LABEL = {P:"local peak", f:"local, good", s:"Quebec storage", g:"Quebec greenhouse", C:"local peak (rest of Canada)", c:"local, good (rest of Canada)", I:"imported, at its best", i:"imported, good"};
+const RANK = {P:0, C:0, I:0, f:1, c:1, i:1, s:2, g:3, ".":4};
+const PEAKS = "PCI";
+
+// Months until the next peak, used to order rows that share a rank.
+function distance(code, m) {
+  for (let k = 0; k < 12; k++) if (PEAKS.includes(code[(m + k) % 12])) return k;
+  return 12;
+}
+const THIS_MONTH = new Date().getMonth();
+function saleOf(id) {
+  const d = DEALS[id];
+  if (!d) return null;
+  const st = d.best_now && d[d.best_now] && d[d.best_now].now ? d.best_now : ["Maxi", "IGA", "Metro", "Other"].find(x => d[x] && d[x].now);
+  if (!st) return null;
+  const o = d[st].now;
+  return { store: st, text: st === "Other" ? o.price : st + " " + o.price, to: o.to, item: o.item };
+}
+function maxiSale(id) {
+  const d = DEALS[id];
+  return d && d.Maxi && d.Maxi.now ? { text: "Maxi " + d.Maxi.now.price, to: d.Maxi.now.to, item: d.Maxi.now.item } : null;
+}
+function isStar(code, key, id, m) {
+  const v = indexOf(key, id, m);
+  return code[m] !== "." && v != null && priceLevel(v) <= 2;
+}
+function tier(row, m) {
+  const [id, , , code, , key] = row;
+  const season = code[m] !== ".";
+  const sale = m === THIS_MONTH && saleOf(id);
+  if (season && sale) return 0;
+  if (isStar(code, key, id, m)) return 1;
+  if (season) return 2;
+  return sale ? 3 : 4;
+}
+function sortRows(rows, m) {
+  return [...rows].sort((a, b) => {
+    const t = tier(a, m) - tier(b, m);
+    if (t) return t;
+    const sa = isStar(a[3], a[5], a[0], m) ? 0 : 1, sb = isStar(b[3], b[5], b[0], m) ? 0 : 1;
+    if (sa !== sb) return sa - sb;
+    if (m === THIS_MONTH) { const xa = maxiSale(a[0]) ? 0 : 1, xb = maxiSale(b[0]) ? 0 : 1; if (xa !== xb) return xa - xb; }
+    const ca = a[3], cb = b[3];
+    const r = RANK[ca[m]] - RANK[cb[m]];
+    if (r) return r;
+    const qa = a[4] === "q" ? 0 : 1, qb = b[4] === "q" ? 0 : 1;
+    if (qa !== qb) return qa - qb;
+    const d = distance(ca, m) - distance(cb, m);
+    if (d) return d;
+    return a[1].localeCompare(b[1]);
+  });
+}
+function indexOf(key, id, i) {
+  if (key) return PRICE[key][2][i];
+  return WS[id] ? WS[id][6][i] : null;
+}
+function priceLevel(v) { return v <= 85 ? 1 : v <= 95 ? 2 : v < 105 ? 3 : v < 115 ? 4 : 5; }
+const LEVEL = ["", "much cheaper than usual", "a bit cheaper than usual", "usual price", "a bit pricier than usual", "much pricier than usual"];
+function priceMark(v) { return v == null ? "" : " p" + priceLevel(v); }
+function priceCols(key, id) {
+  const v = MONTHS.map((_, i) => indexOf(key, id, i));
+  const ok = v.map((x, i) => [x, i]).filter(([x]) => x != null);
+  if (!ok.length) return '<td class="num"></td><td class="num"></td>';
+  const lo = ok.reduce((a, b) => b[0] < a[0] ? b : a), hi = ok.reduce((a, b) => b[0] > a[0] ? b : a);
+  return `<td class="num"><span class="lo">${MONTHS_LONG[lo[1]]}</span></td><td class="num"><span class="hi">${MONTHS_LONG[hi[1]]}</span></td>`;
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const STORES = ["Maxi", "IGA", "Metro", "Other"];
+function dealCols(id) {
+  const d = DEALS[id] || {};
+  return STORES.map(st => {
+    const o = d[st];
+    if (!o) {
+      if (st === "Other" && d.last) return `<td class="deal" title="${esc(d.last.item)}"><span class="nx">Last seen: ${esc(d.last.store)} ${esc(d.last.price)}, ${esc(d.last.to)}</span></td>`;
+      return '<td class="deal"></td>';
+    }
+    let h = "";
+    if (o.now) h += `${esc(o.now.price)}`;
+    if (o.next) h += `${h ? "<br>" : ""}<span class="nx">Next: ${esc(o.next.price)} from ${esc(o.next.from)}</span>`;
+    const best = d.best_now === st ? " best" : "";
+    const title = [o.now && (o.now.item + ", to " + o.now.to), o.next && ("next: " + o.next.item)].filter(Boolean).join("; ");
+    return `<td class="deal has${best}" title="${esc(title)}">${h}</td>`;
+  }).join("");
+}
+// Regular price for a sale: the store's own regular price from the flyer when it gives one,
+// otherwise the Statistics Canada Quebec average shelf price. Saving is shown only when units match.
+const money = t => { const x = /\$\s*([\d.]+)/.exec(t || ""); return x ? parseFloat(x[1]) : null; };
+const squash = t => (t || "").toLowerCase().replace(/\s+/g, "");
+function regularOf(key, deal) {
+  const p = money(deal.price);
+  if (deal.reg) return { text: `$${deal.reg.toFixed(2)}`, src: "store's regular price", save: p ? 1 - p / deal.reg : null };
+  if (!key || !PRICE[key]) return null;
+  const [u, avg] = PRICE[key];
+  const out = { text: `$${avg.toFixed(2)} <span class="u">/${u} avg</span>`, src: "Quebec average shelf price (StatCan)", save: null };
+  const bag = /^([\d.]+) ?lb (bag|box)$/.exec(u);
+  const regLb = u === "kg" ? avg / 2.2046 : bag ? avg / parseFloat(bag[1]) : null;
+  if (deal.lb && regLb) out.save = 1 - deal.lb / regLb;
+  else if (p && /\d/.test(u) && squash(deal.price).includes(squash(u).replace(/(bag|box)$/, ""))) out.save = 1 - p / avg;
+  else if (p && u === "each" && / each$/.test(deal.price)) out.save = 1 - p / avg;
+  return out;
+}
+function bestOther(id) {
+  const d = DEALS[id] || {};
+  const st = ["IGA", "Metro", "Other"].filter(x => d[x] && d[x].now);
+  if (!st.length) return "";
+  const withLb = st.filter(x => d[x].now.lb);
+  const pick = withLb.length ? withLb.sort((a, b) => d[a].now.lb - d[b].now.lb)[0] : st[0];
+  return (pick === "Other" ? "" : pick + " ") + d[pick].now.price;
+}
+// The two-line "what to buy this week" note at the top.
+function blurb(m) {
+  const all = [];
+  for (const [, rows] of DATA) for (const [id, en, , code, , key] of rows) {
+    const c = code[m];
+    if (c === ".") continue;
+    const v = indexOf(key, id, m);
+    const d = DEALS[id], mx = m === THIS_MONTH && d && d.Maxi && d.Maxi.now;
+    const reg = mx ? regularOf(key, mx) : null;
+    const cheap = reg && reg.save != null ? -reg.save * 100 : v != null ? v - 100 : 50;
+    all.push({ id, en, best: "PCI".includes(c), v, mx, cheap, other: m === THIS_MONTH ? bestOther(id) : "" });
+  }
+  const byCheap = (a, b) => (b.best - a.best) || a.cheap - b.cheap;
+  const atMaxi = all.filter(x => x.mx && x.cheap < 0).sort(byCheap).slice(0, 5);
+  const eat = all.filter(x => !x.mx && x.best && x.v != null && x.v <= 95).sort(byCheap).slice(0, 4);
+  const skip = all.filter(x => x.v != null && x.v >= 115).sort((a, b) => b.v - a.v).slice(0, 3);
+  const list = a => a.length > 1 ? a.slice(0, -1).join(", ") + " and " + a[a.length - 1] : a[0] || "";
+  const live = m === THIS_MONTH;
+  let h = "";
+  if (live && atMaxi.length) h += `<b>Buy at Maxi this week:</b> ${list(atMaxi.map(x => `${x.en.toLowerCase()} <span class="money">${esc(x.mx.price)}</span>`))}. `;
+  if (eat.length) h += `<b>${live ? "Also at their best and cheap" : "Best and cheap in " + MONTHS_LONG[m]}:</b> ${list(eat.map(x => x.en.toLowerCase() + (x.other ? ` (${esc(x.other)})` : "")))}. `;
+  if (skip.length) h += `<b>Skip for now:</b> ${list(skip.map(x => x.en.toLowerCase()))}, pricier than usual.`;
+  return (h || "Nothing stands out this month.") + `<small>★ in season and cheaper than usual</small>`;
+}
+
+function kpis(m) {
+  const live = m === THIS_MONTH;
+  let maxi = 0, best = 0, top = null;
+  for (const [, rows] of DATA) for (const [id, en, , code, , key] of rows) {
+    if ("PfCI".includes(code[m])) best++;
+    const d = DEALS[id], mx = live && d && d.Maxi && d.Maxi.now;
+    if (!mx || code[m] === ".") continue;
+    maxi++;
+  }
+  // Best deal this week: biggest saving off regular price at any store, item in season
+  if (live) for (const [, rows] of DATA) for (const [id, en, , code, , key] of rows) {
+    const d = DEALS[id];
+    if (!d || code[m] === ".") continue;
+    for (const st of ["Maxi", "IGA", "Metro", "Other"]) {
+      const o = d[st] && d[st].now;
+      if (!o) continue;
+      const r = regularOf(key, o);
+      if (r && r.save != null && r.save < 0.9 && (!top || r.save > top.save)) top = { save: r.save, en, where: st === "Other" ? o.price : st + " " + o.price };
+    }
+  }
+  const tile = (cls, big, lbl) => `<div class="kpi ${cls}"><b>${big}</b><span>${lbl}</span></div>`;
+  // Freshest: local peak this month, on sale first (Maxi first), then cheapest vs usual
+  const peak = [];
+  for (const [, rows] of DATA) for (const [id, en, , code, , key] of rows) {
+    if (!"PC".includes(code[m])) continue;
+    const d = live ? DEALS[id] : null;
+    const st = d ? ["Maxi", "IGA", "Metro", "Other"].find(x => d[x] && d[x].now) : null;
+    const v = indexOf(key, id, m);
+    peak.push({ en, st, sale: st ? (st === "Other" ? d[st].now.price : st + " " + d[st].now.price) : "", score: (st ? 0 : 1000) + (st === "Maxi" ? -50 : 0) + (v == null ? 100 : v) });
+  }
+  peak.sort((a, b) => a.score - b.score);
+  const f = peak[0], rest = peak.slice(1, 4).map(x => x.en.toLowerCase());
+  return tile("lime", f ? f.en : "–", f ? `Freshest: local peak${f.sale ? ", " + esc(f.sale) : ""}${rest.length ? ". Also peak: " + rest.join(", ") : ""}` : "Freshest this month") +
+    tile("sun", top ? Math.round(top.save * 100) + "% off" : "–", top ? `Best deal this week: ${top.en.toLowerCase()}, ${esc(top.where)}` : "Best deal this week") +
+    tile("", best, "items at their best in " + MONTHS_LONG[m]) +
+    tile("", live && DEALS_DATE ? DEALS_DATE.replace(/, \d{4}$/, "") : "–", "flyers checked");
+}
+
+function dealTable(m) {
+  if (m !== THIS_MONTH) return `<div class="card picks"><h3>This week's watchlist<span class="wl">Tasty / deals</span><em>Only for ${MONTHS_LONG[THIS_MONTH]}. Switch back to see them.</em></h3></div>`;
+  let body = "", count = 0;
+  for (const [group, rows] of DATA) {
+    const items = [];
+    for (const [id, en, , code, origin, key] of rows) {
+      if (!keep(code, m)) continue;
+      const d = DEALS[id];
+      if (!d || !["Maxi", "IGA", "Metro", "Other"].some(x => d[x] && d[x].now)) continue;
+      const mx = d.Maxi && d.Maxi.now;
+      if (!mx && code[m] === ".") continue;  // out of season and not at Maxi: noise
+      const reg = mx ? regularOf(key, mx) : null;
+      const v = indexOf(key, id, m);
+      const star = code[m] !== "." && v != null && priceLevel(v) <= 2;
+      items.push({ en, origin, c: code[m], mx, reg, v, star, other: bestOther(id) });
+    }
+    if (!items.length) continue;
+    // Best season first, then any season, then out of season; inside each, cheapest first (sale saving, else this month's price vs usual).
+    const tierOf = c => "PCI".includes(c) ? 0 : c === "." ? 2 : 1;
+    const cheap = x => x.reg && x.reg.save != null ? -x.reg.save * 100 : x.v != null ? x.v - 100 : 50;
+    items.sort((a, b) => tierOf(a.c) - tierOf(b.c) || cheap(a) - cheap(b) || (b.mx ? 1 : 0) - (a.mx ? 1 : 0));
+    body += `<tr class="dg"><td colspan="8">${group}</td></tr>`;
+    for (const x of items) {
+      count++;
+      const save = x.reg && x.reg.save != null && x.reg.save > 0.005 ? `<b class="save">${Math.round(x.reg.save * 100)}% off</b>` : "";
+      const month = x.v == null ? "" : x.v < 100 ? `${x.star ? '<span class="star">★</span> ' : ""}${100 - x.v}% below usual` : x.v > 100 ? `${x.v - 100}% above usual` : "usual";
+      body += `<tr>
+        <th scope="row" class="o-${x.origin}">${x.en}</th>
+        <td class="ssn">${x.c === "." ? "" : `<i class="sw ${seasonClass(x.c)}"></i>${LABEL[x.c].replace(/^./, ch => ch.toUpperCase())}`}</td>
+        <td class="mx">${x.mx ? `<b title="${esc(x.mx.item)}">${esc(x.mx.price)}</b>` : ""}</td>
+        <td title="${x.reg ? x.reg.src : ""}">${x.reg ? x.reg.text : ""}</td>
+        <td>${save}</td>
+        <td>${x.mx ? esc(x.mx.to) : ""}</td>
+        <td>${month}</td>
+        <td class="oth">${esc(x.other)}</td></tr>`;
+    }
+  }
+  return `<div class="card picks"><h3>This week's watchlist<span class="wl">Tasty / deals</span><em>${DEALS_DATE ? "Updated " + DEALS_DATE : ""}</em></h3>
+    <div class="scroll"><table class="dt"><thead><tr><th>Item</th><th>Season now</th><th>Maxi sale</th><th>Regular price</th><th>Saving</th><th>Until</th><th>This month vs usual</th><th>Best other store</th></tr></thead><tbody>${body || '<tr><td colspan="8">No flyer deals logged this week.</td></tr>'}</tbody></table></div></div>`;
+}
+
+// Uppercase and lowercase codes get distinct class names: class matching ignores case in some render modes.
+function seasonClass(c) { return "c-" + ({ C: "CB", I: "IB" }[c] || c); }
+
+// Toggle: keep only items at their best this month (Quebec peak or fresh, rest of Canada best, imported best).
+let BEST_ONLY = false;
+try { BEST_ONLY = localStorage.getItem("bestonly") === "1"; } catch (e) {}
+const keep = (code, m) => !BEST_ONLY || "PfCI".includes(code[m]);
+let CUR = new Date().getMonth();
+
+function render(m) {
+  CUR = m;
+  let html = "<thead><tr><th></th>" + MONTHS.map((x,i)=>`<th class="${i===m?'now':''}" scope="col">${x}</th>`).join("") +
+    '<th class="deal" scope="col">Maxi</th><th class="deal" scope="col">IGA</th><th class="deal" scope="col">Metro</th><th class="deal" scope="col">Other stores</th></tr></thead><tbody>';
+  for (const [group, allRows] of DATA) {
+    const rows = allRows.filter(r => keep(r[3], m));
+    if (!rows.length) continue;
+    html += `<tr class="grp"><td colspan="17">${group}</td></tr>`;
+    for (const [id, en, fr, code, origin, key] of sortRows(rows, m)) {
+      html += `<tr><th class="name o-${origin}" scope="row">${en}<i>${fr}</i></th>`;
+      const vals = MONTHS.map((_, j) => indexOf(key, id, j));
+      [...code].forEach((c,i)=>{
+        const cls = c === "." ? "" : seasonClass(c);
+        const t = c === "." ? "" : `${en}, ${MONTHS[i]}: ${LABEL[c]}`;
+        const v = vals[i];
+        const p = v == null ? "" : `. Price: ${LEVEL[priceLevel(v)]} (${v > 100 ? "+" : ""}${v - 100}% vs average)`;
+        html += `<td class="m ${i===m?'now':''}" title="${t || en + ", " + MONTHS[i] + ": not in season"}${p}"><div class="sb ${cls}">${c !== "." && v != null && priceLevel(v) <= 2 ? '<span class="star">★</span>' : ""}</div></td>`;
+      });
+      html += dealCols(id) + "</tr>";
+    }
+  }
+  document.getElementById("grid").innerHTML = html + "</tbody>";
+  document.getElementById("nowp").innerHTML = dealTable(m);
+  document.getElementById("blurb").innerHTML = blurb(m);
+  document.getElementById("kpis").innerHTML = kpis(m);
+  document.getElementById("sub").textContent = `${MONTHS_LONG[m]}: what's on sale and in season sits on top.`;
+  document.querySelectorAll("#picker button").forEach((b,i)=>b.setAttribute("aria-pressed", String(i===m)));
+  document.querySelectorAll(".month").forEach((el,i)=>el.classList.toggle("now", i===m));
+}
+
+const bestBox = document.getElementById("bestonly");
+bestBox.checked = BEST_ONLY;
+bestBox.addEventListener("change", () => {
+  BEST_ONLY = bestBox.checked;
+  try { localStorage.setItem("bestonly", BEST_ONLY ? "1" : "0"); } catch (e) {}
+  render(CUR);
+});
+const picker = document.getElementById("picker");
+MONTHS.forEach((x,i)=>{
+  const b = document.createElement("button");
+  b.type = "button"; b.id = "m-" + i; b.textContent = x;
+  b.addEventListener("click", ()=>render(i));
+  picker.appendChild(b);
+});
+
+const board = document.getElementById("board");
+board.innerHTML = MONTHS.map((x,i)=>{
+  const peak = [], fresh = [], store = [], ca = [], imp = [];
+  for (const [, rows] of DATA) for (const [, en,, code] of rows) {
+    const c = code[i];
+    if (c === "P") peak.push(en); else if (c === "f") fresh.push(en); else if (c === "s") store.push(en);
+    else if (c === "C") ca.push(en); else if (c === "I") imp.push(en);
+  }
+  const uniq = a => [...new Set(a)];
+  const line = (lbl, a, cls="") => a.length ? `<div><div class="lbl ${cls}">${lbl}</div><p>${uniq(a).join(", ")}</p></div>` : "";
+  const body = line("Local peak", peak.concat(ca)) + line("Local, good", fresh) + line("From storage", store) + line("Imported, at its best", imp, "x");
+  return `<article class="month"><h3>${MONTHS_LONG[i]}<em>${MONTHS_FR[i]}</em></h3>${body || "<p>Greenhouse only.</p>"}</article>`;
+}).join("");
+
+render(new Date().getMonth());
+</script>
