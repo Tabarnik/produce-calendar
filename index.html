@@ -203,8 +203,6 @@ td.deal .nx { color: var(--muted); font-weight: 400; }
 .foot a { color: inherit; }
 
 @media (max-width: 640px) {
-  .tabs { width: 100%; overflow-x: auto; scrollbar-width: none; justify-content: flex-start; }
-  .tabs button { padding: 9px 14px; font-size: 13px; flex: none; }
   .controls { width: 100%; }
   .storepick { flex: 1; justify-content: space-between; }
   .kpi { padding: 16px; }
@@ -228,17 +226,125 @@ td.deal .nx { color: var(--muted); font-weight: 400; }
   .month { padding: 5px 7px; gap: 2px; } .month h3 { font-size: 12px; } .month p { font-size: 7.5px; } .month .icons { display: none; }
   .card, .sheet, .month { border-radius: 6px; }
 }
-.kpi b { overflow-wrap: normal; hyphens: auto; }
-@media (max-width: 500px) { .kpi b { font-size: 27px; } }
-/* Year grid: the month headers are the month picker; keep the grid scrolling inside its card */
+
+/* ---------- Mobile ---------- */
+.tab > *, .card, .sheet, .kpi, .hero > * { min-width: 0; }
 .tab { grid-template-columns: minmax(0, 1fr); }
-.yearbar { justify-content: center; text-align: center; }
+.tabs .sm, .deals .why2, #grid .ms { display: none; }
+/* Tighter tables everywhere, card mode up to tablet width */
+.tabs { justify-content: center; }
+.dt { min-width: 0; }
+.dt td, .dt tbody th { padding: 7px 8px; }
+.dt thead th { padding: 8px; white-space: normal; }
+.dt td.oth, .dt td[data-label="Regular price"] { white-space: normal; }
+#grid { min-width: 0; }
+td.deal { white-space: normal; }
+@media (max-width: 1100px) {
+  .nowp .card { padding: 18px 12px; border-radius: 14px; }
+  .nowp h3 { font-size: 30px; margin-bottom: 6px; }
+  /* Watchlist: each row becomes a card with labelled fields */
+  .nowp .scroll { overflow: visible; }
+  .dt, .dt tbody, .dt tr, .dt td, .dt tbody th { display: block; }
+  .dt { min-width: 0; }
+  .dt thead { display: none; }
+  .dt tr.dg td { font-size: 22px; padding: 18px 2px 4px; border-bottom: 0; }
+  .dt tbody tr:not(.dg) { background: var(--card2); border-radius: 14px; padding: 12px 14px 14px; margin: 8px 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
+  .dt tbody tr:not(.dg):hover td, .dt tbody tr:not(.dg):hover th { background: none; }
+  .dt tbody th { grid-column: 1 / -1; border: 0; padding: 0; font-size: 16px; display: flex; align-items: center; white-space: normal; }
+  .dt td { border: 0; padding: 0; white-space: normal; font-size: 13.5px; }
+  .dt td[data-label]::before { content: attr(data-label); display: block; font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+  .dt td:empty { display: none; }
+  .dt td.mx b { display: inline-block; }
+  /* Year grid: name plus twelve months, store columns live in the Watchlist */
+  .yearbar { justify-items: stretch; }
+  .picker { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; width: 100%; border-radius: 18px; padding: 5px; }
+  .picker button { padding: 8px 0; min-height: 40px; font-size: 13px; border-radius: 12px; }
+  .yearbar small { font-size: 12.5px; }
+  .sheet { padding: 12px 8px 14px; border-radius: 14px; }
+  #grid { min-width: 0; width: 100%; border-spacing: 2px; table-layout: fixed; }
+  #grid thead th:first-child { width: 96px; }
+  #grid th.deal, #grid td.deal, #grid td.num { display: none; }
+  #grid thead th { font-size: 9px; letter-spacing: 0; text-transform: none; padding-bottom: 4px; overflow: hidden; }
+  #grid thead th.now { border-radius: 6px; }
+  #grid .ml { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  #grid .ms { display: inline; font-size: 11px; font-weight: 700; }
+  .grp td { font-size: 20px; padding: 16px 0 4px; }
+  .name { white-space: normal; font-size: 11.5px; line-height: 1.1; padding-right: 4px !important; overflow-wrap: anywhere; }
+  .name i, .name .ico { display: none; }
+  td.m { height: 20px; width: auto; }
+  td.m .sb { height: 17px; border-radius: 4px; margin: 0; }
+  td.m.now { border-radius: 5px; }
+  .star { font-size: 9px; }
+  .legend2 { justify-content: flex-start; gap: 6px 14px; font-size: 12px; }
+  .dt tbody tr:not(.dg) { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px 12px; padding: 10px 12px; margin: 6px 0; border-radius: 12px; }
+  .dt tbody th { font-size: 15px; padding-bottom: 2px; }
+  .dt td { font-size: 13px; line-height: 1.3; }
+  .dt td[data-label]::before { font-size: 9.5px; margin-bottom: 2px; letter-spacing: 0.06em; }
+  .dt td.mx b { padding: 2px 9px; font-size: 13px; }
+  .dt .ico { width: 26px; height: 26px; margin-right: 8px; } .dt .ico svg { width: 20px; height: 20px; }
+  .dt tr.dg td { font-size: 20px; padding: 14px 2px 2px; }
+}
+@media (max-width: 640px) {
+  body { font-size: 14.5px; }
+  .wrap { gap: 18px; padding-top: 18px; }
+  /* Masthead: compact, everything above the fold */
+  .mast { gap: 10px; padding-top: 0; }
+  .mark { width: 46px; height: 46px; } .mark svg { width: 32px; height: 32px; }
+  .eyebrow { font-size: 11px; }
+  h1 { font-size: 46px; line-height: 0.95; }
+  .lede { font-size: 15px; max-width: 34ch; }
+  .diamond { display: none; }
+  .controls { width: 100%; flex-wrap: nowrap; gap: 8px; }
+  .storepick { flex: 1 1 auto; min-width: 0; padding-left: 12px; justify-content: space-between; }
+  .storepick select { min-width: 0; flex: 1; padding: 9px 10px; }
+  .toggle { flex: none; padding: 6px 12px 6px 6px; }
+  /* Tabs: full width, three equal pills, pinned while scrolling */
+  .tabs { position: sticky; top: max(8px, env(safe-area-inset-top, 0px)); z-index: 30; width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; margin-top: 2px; box-shadow: 0 6px 18px rgba(118, 37, 48, 0.12); overflow: visible; }
+  .tabs button { padding: 11px 6px; font-size: 14px; min-height: 44px; }
+  .tabs .lg { display: none; } .tabs .sm { display: inline; }
+  /* Hero */
+  .hero { grid-template-columns: 1fr; gap: 6px; padding: 18px 18px 20px; text-align: left; }
+  .basket { width: 220px; height: 150px; } .basket .fr { width: 48px; height: 48px; } .basket .bk { width: 140px; height: 112px; bottom: -4px; }
+  .hero h2 { font-size: 32px; margin-bottom: 8px; }
+  .blurb { font-size: 15px; line-height: 1.7; }
+  .blurb .money { font-size: 13px; }
+  /* KPIs: the two headline tiles full width, the two counts side by side */
+  .kpis { gap: 10px; }
+  .kpi { padding: 16px; border-radius: 14px; }
+  .kpi.lime, .kpi.sun { grid-column: 1 / -1; }
+  .kpi.lime { grid-template-columns: 52px minmax(0, 1fr); column-gap: 14px; align-items: center; }
+  .kpi.lime .kico { grid-row: 1 / span 2; width: 52px; height: 52px; }
+  .kpi b { font-size: 30px; overflow-wrap: normal; }
+  .kpi span { font-size: 13px; }
+  /* Deals: one-column shelf of row cards */
+  .dl { padding: 18px 12px 14px; border-radius: 14px; }
+  .sechead { margin-bottom: 14px; } .sechead h2 { font-size: 32px; }
+  .deals { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .deals li { grid-template-columns: 72px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 12px; row-gap: 6px; padding: 10px 12px 10px 10px; align-items: center; border-radius: 14px; }
+  .deals .pimg { grid-row: 1 / span 2; width: 72px; aspect-ratio: 1 / 1; border-radius: 12px; }
+  .deals .pimg svg { width: 80%; }
+  .deals .pimg .why { display: none; }
+  .deals .dn b { font-size: 21px; }
+  .deals small { font-size: 12px; margin-top: 2px; }
+  .deals .dp { gap: 5px 6px; }
+  .deals .dp small { order: 3; }
+  .deals .pill { font-size: 13px; padding: 4px 10px; }
+  .deals .why2 { display: inline-flex; }
+  .deals .why2 > * { white-space: nowrap; font-size: 11.5px; }
+  /* Month by month */
+  .board { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .month { padding: 16px; border-radius: 14px; }
+  .month h3 { font-size: 28px; }
+  .month .icons svg { width: 30px; height: 30px; }
+}
+/* Year grid: the month headers are the month picker */
 #grid thead th.mh { padding: 0 0 6px; text-align: center; }
 #grid thead th.mh button { font: inherit; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; color: var(--muted); background: transparent; border: 0; border-radius: 999px; width: 100%; padding: 4px 0; cursor: pointer; }
 #grid thead th.mh button:hover { background: var(--card2); color: var(--ink); }
 #grid thead th.mh button:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
 #grid thead th.mh.now { background: transparent; }
 #grid thead th.mh.now button { background: var(--accent-ink); color: var(--on-accent); }
+@media (max-width: 640px) { #grid thead th.mh button { padding: 6px 0; min-height: 30px; border-radius: 6px; } }
 @media print { #grid thead th.mh button { padding: 0; font-size: 7px; } }
 </style>
 
@@ -253,9 +359,9 @@ td.deal .nx { color: var(--muted); font-weight: 400; }
         <label class="toggle"><input type="checkbox" id="bestonly"><span class="track"><span class="knob"></span></span>Best only</label>
       </div>
     <nav class="tabs" role="tablist" aria-label="Sections">
-      <button type="button" role="tab" data-tab="deals">This week's deals</button>
+      <button type="button" role="tab" data-tab="deals"><span class="lg">This week's deals</span><span class="sm">Deals</span></button>
       <button type="button" role="tab" data-tab="watch">Watchlist</button>
-      <button type="button" role="tab" data-tab="year">Year at a glance</button>
+      <button type="button" role="tab" data-tab="year"><span class="lg">Year at a glance</span><span class="sm">Year</span></button>
     </nav>
   </header>
 
@@ -656,7 +762,7 @@ function dealsList() {
     const why = x.save != null && x.save < -0.005 ? `<span class="dear">${Math.round(-x.save * 100)}% above regular</span>` : x.save != null && x.save > 0.005 ? `<b class="save">${Math.round(x.save * 100)}% off</b>` : x.v != null && x.v < 100 ? `<b class="below">${x.v <= 95 ? "★ " : ""}${100 - x.v}% below usual</b>` : x.v != null && x.v > 105 ? `<span class="dear">${x.v - 100}% above usual</span>` : "";
     return `<li><div class="pimg">${svgOf(x.id)}${why ? `<span class="why">${why}</span>` : ""}</div>
       <div class="dn"><b>${x.en}</b><small><i class="sw ${seasonClass(x.c)}"></i>${LABEL[x.c].replace(/^./, c => c.toUpperCase())}${x.o.to ? " · until " + esc(x.o.to) : ""}</small></div>
-      <div class="dp"><span class="pill" title="${esc(x.o.item)}">${esc(withStore(x.o))}</span>${x.r ? `<small>reg. ${x.r.text}</small>` : ""}</div></li>`;
+      <div class="dp"><span class="pill" title="${esc(x.o.item)}">${esc(withStore(x.o))}</span>${why ? `<span class="why2">${why}</span>` : ""}${x.r ? `<small>reg. ${x.r.text}</small>` : ""}</div></li>`;
   };
   return `<div class="sechead"><h2>Best deals at ${esc(myName())}</h2><em>${items.length} in season this week${DEALS_DATE ? ", flyers checked " + DEALS_DATE : ""}</em></div>` +
     (items.length ? `<ul class="deals">${items.map(row).join("")}</ul>` : `<p class="empty">No produce in season on sale at ${esc(myName())} this week. Try another store above.</p>`);
@@ -706,13 +812,13 @@ function dealTable(m) {
       const month = x.v == null ? "" : x.v < 100 ? `${x.star ? '<span class="star">★</span> ' : ""}${100 - x.v}% below usual` : x.v > 100 ? `${x.v - 100}% above usual` : "usual";
       body += `<tr>
         <th scope="row" class="o-${x.origin}">${ic(x.id)}${x.en}</th>
-        <td class="ssn">${x.c === "." ? "" : `<i class="sw ${seasonClass(x.c)}"></i>${LABEL[x.c].replace(/^./, ch => ch.toUpperCase())}`}</td>
-        <td class="mx">${x.mx ? `<b title="${esc(x.mx.item)}">${esc(withStore(x.mx))}</b>` : ""}</td>
-        <td title="${x.reg ? x.reg.src : ""}">${x.reg ? x.reg.text : ""}</td>
-        <td>${save}</td>
-        <td>${x.mx ? esc(x.mx.to) : ""}</td>
-        <td>${month}</td>
-        <td class="oth">${esc(x.other)}</td></tr>`;
+        <td data-label="Season now" class="ssn">${x.c === "." ? "" : `<i class="sw ${seasonClass(x.c)}"></i>${LABEL[x.c].replace(/^./, ch => ch.toUpperCase())}`}</td>
+        <td data-label="Sale" class="mx">${x.mx ? `<b title="${esc(x.mx.item)}">${esc(withStore(x.mx))}</b>` : ""}</td>
+        <td data-label="Regular price" title="${x.reg ? x.reg.src : ""}">${x.reg ? x.reg.text : ""}</td>
+        <td data-label="Saving">${save}</td>
+        <td data-label="Until">${x.mx ? esc(x.mx.to) : ""}</td>
+        <td data-label="This month vs usual">${month}</td>
+        <td data-label="Best other store" class="oth">${esc(x.other)}</td></tr>`;
     }
   }
   return `<div class="card picks"><h3>This week's watchlist<span class="wl">Tasty / deals</span><em>${DEALS_DATE ? "Updated " + DEALS_DATE : ""}</em></h3>
@@ -730,7 +836,7 @@ let CUR = new Date().getMonth();
 
 function render(m) {
   CUR = m;
-  let html = "<thead><tr><th></th>" + MONTHS.map((x,i)=>`<th class="mh${i===m?' now':''}" scope="col"><button type="button" data-m="${i}" aria-pressed="${i===m}" title="Sort for ${MONTHS_LONG[i]}">${x}</button></th>`).join("") +
+  let html = "<thead><tr><th></th>" + MONTHS.map((x,i)=>`<th class="mh${i===m?' now':''}" scope="col"><button type="button" data-m="${i}" aria-pressed="${i===m}" title="Sort for ${MONTHS_LONG[i]}"><span class="ml">${x}</span><span class="ms" aria-hidden="true">${x[0]}</span></button></th>`).join("") +
     '<th class="deal" scope="col">Maxi</th><th class="deal" scope="col">IGA</th><th class="deal" scope="col">Metro</th><th class="deal" scope="col">Other stores</th></tr></thead><tbody>';
   for (const [group, allRows] of DATA) {
     const rows = allRows.filter(r => keep(r[3], m));
