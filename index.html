@@ -230,6 +230,16 @@ td.deal .nx { color: var(--muted); font-weight: 400; }
 }
 .kpi b { overflow-wrap: normal; hyphens: auto; }
 @media (max-width: 500px) { .kpi b { font-size: 27px; } }
+/* Year grid: the month headers are the month picker; keep the grid scrolling inside its card */
+.tab { grid-template-columns: minmax(0, 1fr); }
+.yearbar { justify-content: center; text-align: center; }
+#grid thead th.mh { padding: 0 0 6px; text-align: center; }
+#grid thead th.mh button { font: inherit; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; color: var(--muted); background: transparent; border: 0; border-radius: 999px; width: 100%; padding: 4px 0; cursor: pointer; }
+#grid thead th.mh button:hover { background: var(--card2); color: var(--ink); }
+#grid thead th.mh button:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+#grid thead th.mh.now { background: transparent; }
+#grid thead th.mh.now button { background: var(--accent-ink); color: var(--on-accent); }
+@media print { #grid thead th.mh button { padding: 0; font-size: 7px; } }
 </style>
 
 <div class="wrap">
@@ -263,7 +273,7 @@ td.deal .nx { color: var(--muted); font-weight: 400; }
   </section>
 
   <section class="tab" id="tab-year" role="tabpanel" hidden>
-    <div class="yearbar"><div class="picker" role="group" aria-label="Month" id="picker"></div><small id="sub"></small></div>
+    <div class="yearbar"><small id="sub"></small></div>
     <section class="sheet">
     <div class="scroll"><table id="grid" aria-label="Seasonal availability, prices and flyer deals"></table></div>
     <div class="legend2" aria-label="Legend"><span><b class="star">★</b>Best price</span><span><i class="sw c-P"></i>Local peak</span><span><i class="sw c-f"></i>Local, good</span><span><i class="sw c-IB"></i>Imported peak</span><span><i class="sw c-i"></i>Imported, good</span><span><i class="sw c-s"></i>Storage</span><span><i class="sw c-g"></i>Greenhouse</span><span class="lnote">Local = Quebec and the rest of Canada</span></div>
@@ -521,8 +531,8 @@ const svgOf = id => { const k = iconKey(id); return k ? `<svg viewBox="0 0 48 48
 const ic = id => `<span class="ico" aria-hidden="true">${svgOf(id)}</span>`;
 // The shopper's store. "All" means the cheapest current deal at any store.
 const STORE_LIST = ["Maxi", "IGA", "Metro", "Super C", "Provigo", "Adonis", "Walmart", "Avril", "Mayrand", "Marché Salaberry"];
-let MY = "Maxi";
-try { const v = localStorage.getItem("store"); if (v && (v === "All" || STORE_LIST.includes(v))) MY = v; } catch (e) {}
+let MY = "All";
+try { const v = localStorage.getItem("mystore"); if (v && (v === "All" || STORE_LIST.includes(v))) MY = v; } catch (e) {}
 const myName = () => MY === "All" ? "any store" : MY;
 function dealAt(id, st) {
   const b = BYSTORE[id];
@@ -720,7 +730,7 @@ let CUR = new Date().getMonth();
 
 function render(m) {
   CUR = m;
-  let html = "<thead><tr><th></th>" + MONTHS.map((x,i)=>`<th class="${i===m?'now':''}" scope="col">${x}</th>`).join("") +
+  let html = "<thead><tr><th></th>" + MONTHS.map((x,i)=>`<th class="mh${i===m?' now':''}" scope="col"><button type="button" data-m="${i}" aria-pressed="${i===m}" title="Sort for ${MONTHS_LONG[i]}">${x}</button></th>`).join("") +
     '<th class="deal" scope="col">Maxi</th><th class="deal" scope="col">IGA</th><th class="deal" scope="col">Metro</th><th class="deal" scope="col">Other stores</th></tr></thead><tbody>';
   for (const [group, allRows] of DATA) {
     const rows = allRows.filter(r => keep(r[3], m));
@@ -741,7 +751,7 @@ function render(m) {
   }
   document.getElementById("grid").innerHTML = html + "</tbody>";
   renderWeek();
-  document.getElementById("sub").textContent = `Showing ${MONTHS_LONG[m]}. Pick a month to re-sort; what's good that month moves to the top.`;
+  document.getElementById("sub").textContent = `Showing ${MONTHS_LONG[m]}. Tap any month in the grid to re-sort; what's good that month moves to the top.`;
   document.querySelectorAll("#picker button").forEach((b,i)=>b.setAttribute("aria-pressed", String(i===m)));
   document.querySelectorAll(".month").forEach((el,i)=>el.classList.toggle("now", i===m));
 }
@@ -753,12 +763,9 @@ bestBox.addEventListener("change", () => {
   try { localStorage.setItem("bestonly", BEST_ONLY ? "1" : "0"); } catch (e) {}
   render(CUR);
 });
-const picker = document.getElementById("picker");
-MONTHS.forEach((x,i)=>{
-  const b = document.createElement("button");
-  b.type = "button"; b.id = "m-" + i; b.textContent = x;
-  b.addEventListener("click", ()=>render(i));
-  picker.appendChild(b);
+document.getElementById("grid").addEventListener("click", e => {
+  const b = e.target.closest("thead button[data-m]");
+  if (b) render(+b.dataset.m);
 });
 
 const board = document.getElementById("board");
@@ -792,7 +799,7 @@ storeSel.innerHTML = STORE_LIST.map(x => `<option>${x}</option>`).join("") + '<o
 storeSel.value = MY;
 storeSel.addEventListener("change", () => {
   MY = storeSel.value;
-  try { localStorage.setItem("store", MY); } catch (e) {}
+  try { localStorage.setItem("mystore", MY); } catch (e) {}
   render(CUR);
 });
 
