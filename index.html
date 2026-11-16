@@ -262,7 +262,7 @@ td.deal { white-space: normal; }
   .yearbar small { font-size: 12.5px; }
   .sheet { padding: 12px 8px 14px; border-radius: 14px; }
   #grid { min-width: 0; width: 100%; border-spacing: 2px; table-layout: fixed; }
-  #grid thead th:first-child { width: 96px; }
+  #grid thead th:first-child { width: 31%; }
   #grid th.deal, #grid td.deal, #grid td.num { display: none; }
   #grid thead th { font-size: 9px; letter-spacing: 0; text-transform: none; padding-bottom: 4px; overflow: hidden; }
   #grid thead th.now { border-radius: 6px; }
@@ -346,6 +346,12 @@ td.deal { white-space: normal; }
 #grid thead th.mh.now button { background: var(--accent-ink); color: var(--on-accent); }
 @media (max-width: 640px) { #grid thead th.mh button { padding: 6px 0; min-height: 30px; border-radius: 6px; } }
 @media print { #grid thead th.mh button { padding: 0; font-size: 7px; } }
+/* Item names link to the item at the store; the item is highlighted, the store and price are plain */
+.blurb a.money { text-decoration: none; }
+.blurb a.money:hover { text-decoration: underline; }
+.deals .dn b a { color: inherit; text-decoration: none; border-bottom: 1px solid currentColor; }
+.dt a.shop { font-size: 12px; font-weight: 600; color: var(--accent-ink); text-decoration: none; white-space: nowrap; }
+.dt a.shop:hover { text-decoration: underline; }
 </style>
 
 <div class="wrap">
@@ -651,6 +657,28 @@ function dealAt(id, st) {
 }
 const myDeal = id => dealAt(id, MY);
 const withStore = o => MY === "All" ? o.store + " " + o.price : o.price;
+// Links to the item on the store's own site. Maxi, Provigo and Walmart search pages were checked on 2026-11-16;
+// the other stores have no searchable product page we could confirm, so they go through a site-limited web search.
+const FR = {};
+for (const [, rows] of DATA) for (const [id, en] of rows) FR[id] = (en || "").split(/ \(|,/)[0].trim().toLowerCase();
+const viaSearch = d => q => "https://www.google.com/search?q=" + encodeURIComponent("site:" + d + " " + q);
+const SHOP = {
+  "Maxi": q => "https://www.maxi.ca/en/search?search-bar=" + encodeURIComponent(q),
+  "Provigo": q => "https://www.provigo.ca/en/search?search-bar=" + encodeURIComponent(q),
+  "Walmart": q => "https://www.walmart.ca/en/search?q=" + encodeURIComponent(q),
+  "IGA": viaSearch("iga.ca"), "Metro": viaSearch("metro.ca"), "Super C": viaSearch("superc.ca"),
+  "Adonis": viaSearch("groupeadonis.ca"), "Avril": viaSearch("avril.ca"), "Mayrand": viaSearch("mayrand.ca")
+};
+const shopUrl = (id, store) => SHOP[store] && FR[id] ? SHOP[store](FR[id]) : null;
+const itemLink = (id, store, label, cls) => { const u = shopUrl(id, store); return u ? `<a class="${cls || ""}" href="${esc(u)}" target="_blank" rel="noopener" title="Find it at ${esc(store)}">${label}</a>` : `<span class="${cls || ""}">${label}</span>`; };
+function otherDeal(id) {
+  const b = BYSTORE[id];
+  if (!b) return null;
+  const all = Object.entries(b).filter(([k]) => k !== MY).map(([k, o]) => Object.assign({ store: k }, o));
+  if (!all.length) return null;
+  const lbs = all.filter(o => o.lb != null).sort((x, y) => x.lb - y.lb);
+  return lbs.length ? lbs[0] : all[0];
+}
 function dealCols(id) {
   const d = DEALS[id] || {};
   return STORES.map(st => {
@@ -712,8 +740,8 @@ function blurb(m) {
   const list = a => a.length > 1 ? a.slice(0, -1).join(", ") + " and " + a[a.length - 1] : a[0] || "";
   const live = m === THIS_MONTH;
   let h = "";
-  if (live && atMaxi.length) h += `<b>Buy at ${esc(myName())} this week:</b> ${list(atMaxi.map(x => `${x.en.toLowerCase()} <span class="money">${esc(withStore(x.mx))}</span>`))}. `;
-  if (eat.length) h += `<b>${live ? "Also at their best and cheap" : "Best and cheap in " + MONTHS_LONG[m]}:</b> ${list(eat.map(x => x.en.toLowerCase() + (x.other ? ` (${esc(x.other)})` : "")))}. `;
+  if (live && atMaxi.length) h += `<b>Buy at ${esc(myName())} this week:</b> ${list(atMaxi.map(x => `${itemLink(x.id, x.mx.store, x.en.toLowerCase(), "money")} ${esc((MY === "All" ? x.mx.store + " " : "") + x.mx.price)}`))}. `;
+  if (eat.length) h += `<b>${live ? "Also at their best and cheap" : "Best and cheap in " + MONTHS_LONG[m]}:</b> ${list(eat.map(x => { const o = live ? otherDeal(x.id) : null; return o ? `${itemLink(x.id, o.store, x.en.toLowerCase(), "money")} ${esc(o.store + " " + o.price)}` : `<span class="money">${x.en.toLowerCase()}</span>`; }))}. `;
   if (skip.length) h += `<b>Skip for now:</b> ${list(skip.map(x => x.en.toLowerCase()))}, pricier than usual.`;
   return h || "Nothing stands out this week.";
 }
@@ -761,7 +789,7 @@ function dealsList() {
   const row = x => {
     const why = x.save != null && x.save < -0.005 ? `<span class="dear">${Math.round(-x.save * 100)}% above regular</span>` : x.save != null && x.save > 0.005 ? `<b class="save">${Math.round(x.save * 100)}% off</b>` : x.v != null && x.v < 100 ? `<b class="below">${x.v <= 95 ? "★ " : ""}${100 - x.v}% below usual</b>` : x.v != null && x.v > 105 ? `<span class="dear">${x.v - 100}% above usual</span>` : "";
     return `<li><div class="pimg">${svgOf(x.id)}${why ? `<span class="why">${why}</span>` : ""}</div>
-      <div class="dn"><b>${x.en}</b><small><i class="sw ${seasonClass(x.c)}"></i>${LABEL[x.c].replace(/^./, c => c.toUpperCase())}${x.o.to ? " · until " + esc(x.o.to) : ""}</small></div>
+      <div class="dn"><b>${itemLink(x.id, x.o.store, x.en)}</b><small><i class="sw ${seasonClass(x.c)}"></i>${LABEL[x.c].replace(/^./, c => c.toUpperCase())}${x.o.to ? " · until " + esc(x.o.to) : ""}</small></div>
       <div class="dp"><span class="pill" title="${esc(x.o.item)}">${esc(withStore(x.o))}</span>${why ? `<span class="why2">${why}</span>` : ""}${x.r ? `<small>reg. ${x.r.text}</small>` : ""}</div></li>`;
   };
   return `<div class="sechead"><h2>Best deals at ${esc(myName())}</h2><em>${items.length} in season this week${DEALS_DATE ? ", flyers checked " + DEALS_DATE : ""}</em></div>` +
@@ -813,7 +841,7 @@ function dealTable(m) {
       body += `<tr>
         <th scope="row" class="o-${x.origin}">${ic(x.id)}${x.en}</th>
         <td data-label="Season now" class="ssn">${x.c === "." ? "" : `<i class="sw ${seasonClass(x.c)}"></i>${LABEL[x.c].replace(/^./, ch => ch.toUpperCase())}`}</td>
-        <td data-label="Sale" class="mx">${x.mx ? `<b title="${esc(x.mx.item)}">${esc(withStore(x.mx))}</b>` : ""}</td>
+        <td data-label="Sale" class="mx">${x.mx ? `<b title="${esc(x.mx.item)}">${esc(withStore(x.mx))}</b>${shopUrl(x.id, x.mx.store) ? ` <a class="shop" href="${esc(shopUrl(x.id, x.mx.store))}" target="_blank" rel="noopener">Shop ↗</a>` : ""}` : ""}</td>
         <td data-label="Regular price" title="${x.reg ? x.reg.src : ""}">${x.reg ? x.reg.text : ""}</td>
         <td data-label="Saving">${save}</td>
         <td data-label="Until">${x.mx ? esc(x.mx.to) : ""}</td>
@@ -841,7 +869,7 @@ function render(m) {
   for (const [group, allRows] of DATA) {
     const rows = allRows.filter(r => keep(r[3], m));
     if (!rows.length) continue;
-    html += `<tr class="grp"><td colspan="17">${group}</td></tr>`;
+    html += `<tr class="grp"><td colspan="13">${group}</td><td class="deal" colspan="4"></td></tr>`;
     for (const [id, en, fr, code, origin, key] of sortRows(rows, m)) {
       html += `<tr><th class="name o-${origin}" scope="row">${ic(id)}${en}<i>${fr}</i></th>`;
       const vals = MONTHS.map((_, j) => indexOf(key, id, j));
